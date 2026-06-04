@@ -1,0 +1,57 @@
+{
+  "name": "porkbun-cli",
+  "version": "0.1.1",
+  "description": "Agent-friendly CLI for the Porkbun API v3.",
+  "keywords": [
+    "porkbun",
+    "cli",
+    "dns",
+    "domains",
+    "automation",
+    "api-client"
+  ],
+  "author": "Jose Mocito",
+  "homepage": "https://github.com/jvm/porkbun-cli#readme",
+  "bugs": {
+    "url": "https://github.com/jvm/porkbun-cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jvm/porkbun-cli.git"
+  },
+  "type": "module",
+  "bin": {
+    "porkbun": "./dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "AGENTS.md",
+    "SKILL.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && mkdir -p dist/generated && cp src/generated/openapi.json dist/generated/openapi.json && chmod +x dist/cli.js",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "dependencies": {
+    "commander": "^14.0.2",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.2",
+    "typescript": "^5.9.3",
+    "undici": "^7.16.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT"
+}

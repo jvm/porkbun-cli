@@ -1,0 +1,701 @@
+export type HttpMethod = "GET" | "POST";
+export type AuthMode = "none" | "optional" | "required";
+export type AuthPlacement = "auto" | "header" | "body";
+
+export interface FieldDefinition {
+  name: string;
+  type: string;
+  description?: string;
+}
+
+export interface OperationDefinition {
+  operationId: string;
+  group: string;
+  summary: string;
+  method: HttpMethod;
+  path: string;
+  mutating: boolean;
+  auth: AuthMode;
+  authPlacement?: AuthPlacement;
+  listKey?: string;
+  outputFields?: FieldDefinition[];
+}
+
+const basicFields: FieldDefinition[] = [
+  { name: "status", type: "string" },
+  { name: "message", type: "string | undefined" },
+  { name: "code", type: "string | undefined" }
+];
+
+const domainFields: FieldDefinition[] = [
+  { name: "domain", type: "string" },
+  { name: "status", type: "string" },
+  { name: "tld", type: "string" },
+  { name: "expireDate", type: "string" },
+  { name: "autoRenew", type: "integer" },
+  { name: "apiAccess", type: "integer" }
+];
+
+const dnsRecordFields: FieldDefinition[] = [
+  { name: "id", type: "string" },
+  { name: "name", type: "string" },
+  { name: "type", type: "string" },
+  { name: "content", type: "string" },
+  { name: "ttl", type: "string" },
+  { name: "prio", type: "string | null" },
+  { name: "notes", type: "string | null" }
+];
+
+export const OPERATIONS: OperationDefinition[] = [
+  {
+    operationId: "ping",
+    group: "Utility",
+    summary: "Test credentials and get caller IP",
+    method: "POST",
+    path: "/ping",
+    mutating: false,
+    auth: "optional",
+    authPlacement: "body",
+    outputFields: [{ name: "yourIp", type: "string" }, { name: "credentialsValid", type: "boolean | undefined" }]
+  },
+  {
+    operationId: "pingGet",
+    group: "Utility",
+    summary: "Test credentials and get caller IP",
+    method: "GET",
+    path: "/ping",
+    mutating: false,
+    auth: "optional",
+    authPlacement: "header",
+    outputFields: [{ name: "yourIp", type: "string" }, { name: "credentialsValid", type: "boolean | undefined" }]
+  },
+  {
+    operationId: "ipPost",
+    group: "Utility",
+    summary: "Get caller IP address",
+    method: "POST",
+    path: "/ip",
+    mutating: false,
+    auth: "none",
+    outputFields: [{ name: "yourIp", type: "string" }, { name: "xForwardedFor", type: "string | undefined" }]
+  },
+  {
+    operationId: "getIp",
+    group: "Utility",
+    summary: "Get caller IP address",
+    method: "GET",
+    path: "/ip",
+    mutating: false,
+    auth: "none",
+    outputFields: [{ name: "yourIp", type: "string" }, { name: "xForwardedFor", type: "string | undefined" }]
+  },
+  {
+    operationId: "getPricing",
+    group: "Pricing",
+    summary: "Retrieve domain pricing",
+    method: "POST",
+    path: "/pricing/get",
+    mutating: false,
+    auth: "none",
+    outputFields: [{ name: "pricing", type: "object" }]
+  },
+  {
+    operationId: "getPricingGet",
+    group: "Pricing",
+    summary: "Retrieve domain pricing",
+    method: "GET",
+    path: "/pricing/get",
+    mutating: false,
+    auth: "none",
+    outputFields: [{ name: "pricing", type: "object" }]
+  },
+  {
+    operationId: "apikeyRequest",
+    group: "API Key Management",
+    summary: "Initiate an API key authorization request",
+    method: "POST",
+    path: "/apikey/request",
+    mutating: true,
+    auth: "none",
+    outputFields: basicFields
+  },
+  {
+    operationId: "apikeyRetrieve",
+    group: "API Key Management",
+    summary: "Poll for API key approval",
+    method: "POST",
+    path: "/apikey/retrieve",
+    mutating: false,
+    auth: "none",
+    outputFields: basicFields
+  },
+  {
+    operationId: "domainCheckDomain",
+    group: "Domain",
+    summary: "Check domain availability",
+    method: "POST",
+    path: "/domain/checkDomain/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: [{ name: "response", type: "object" }, { name: "limits", type: "object | undefined" }]
+  },
+  {
+    operationId: "domainCreate",
+    group: "Domain",
+    summary: "Register a domain",
+    method: "POST",
+    path: "/domain/create/{domain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: [
+      { name: "domain", type: "string" },
+      { name: "orderId", type: "integer" },
+      { name: "cost", type: "integer | undefined" },
+      { name: "balance", type: "integer | undefined" }
+    ]
+  },
+  {
+    operationId: "domainRenew",
+    group: "Domain",
+    summary: "Renew a domain",
+    method: "POST",
+    path: "/domain/renew/{domain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: [
+      { name: "domain", type: "string" },
+      { name: "orderId", type: "integer" },
+      { name: "expirationDate", type: "string | undefined" }
+    ]
+  },
+  {
+    operationId: "transferDomain",
+    group: "Domain",
+    summary: "Initiate a domain transfer",
+    method: "POST",
+    path: "/domain/transfer/{domain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: [
+      { name: "domain", type: "string" },
+      { name: "orderId", type: "integer | undefined" },
+      { name: "transferId", type: "integer | undefined" }
+    ]
+  },
+  {
+    operationId: "getTransferGet",
+    group: "Domain",
+    summary: "Get transfer status",
+    method: "GET",
+    path: "/domain/getTransfer/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    outputFields: [{ name: "transfer", type: "object" }]
+  },
+  {
+    operationId: "listTransfersGet",
+    group: "Domain",
+    summary: "List active transfers",
+    method: "GET",
+    path: "/domain/listTransfers",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    listKey: "transfers",
+    outputFields: [
+      { name: "domain", type: "string" },
+      { name: "status", type: "string" },
+      { name: "statusDescription", type: "string" },
+      { name: "transferDate", type: "string" }
+    ]
+  },
+  {
+    operationId: "listDomains",
+    group: "Domain",
+    summary: "List all domains",
+    method: "POST",
+    path: "/domain/listAll",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    listKey: "domains",
+    outputFields: domainFields
+  },
+  {
+    operationId: "getDomains",
+    group: "Domain",
+    summary: "List all domains",
+    method: "GET",
+    path: "/domain/listAll",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    listKey: "domains",
+    outputFields: domainFields
+  },
+  {
+    operationId: "getDomain",
+    group: "Domain",
+    summary: "Get a single domain",
+    method: "GET",
+    path: "/domain/get/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    outputFields: domainFields
+  },
+  {
+    operationId: "domainUpdateAutoRenew",
+    group: "Domain",
+    summary: "Update auto-renew setting",
+    method: "POST",
+    path: "/domain/updateAutoRenew/{domain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: [{ name: "results", type: "object" }]
+  },
+  {
+    operationId: "domainGetNs",
+    group: "Domain",
+    summary: "Get nameservers",
+    method: "POST",
+    path: "/domain/getNs/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: [{ name: "ns", type: "string[]" }]
+  },
+  {
+    operationId: "getDomainNs",
+    group: "Domain",
+    summary: "Get nameservers",
+    method: "GET",
+    path: "/domain/getNs/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    outputFields: [{ name: "ns", type: "string[]" }]
+  },
+  {
+    operationId: "domainUpdateNs",
+    group: "Domain",
+    summary: "Update nameservers",
+    method: "POST",
+    path: "/domain/updateNs/{domain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "domainGetGlue",
+    group: "Domain",
+    summary: "Get glue records",
+    method: "POST",
+    path: "/domain/getGlue/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    listKey: "records",
+    outputFields: [{ name: "subdomain", type: "string" }, { name: "ips", type: "string[]" }]
+  },
+  {
+    operationId: "getDomainGlue",
+    group: "Domain",
+    summary: "Get glue records",
+    method: "GET",
+    path: "/domain/getGlue/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    listKey: "records",
+    outputFields: [{ name: "subdomain", type: "string" }, { name: "ips", type: "string[]" }]
+  },
+  {
+    operationId: "domainCreateGlue",
+    group: "Domain",
+    summary: "Create glue record",
+    method: "POST",
+    path: "/domain/createGlue/{domain}/{subdomain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "domainUpdateGlue",
+    group: "Domain",
+    summary: "Update glue record",
+    method: "POST",
+    path: "/domain/updateGlue/{domain}/{subdomain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "domainDeleteGlue",
+    group: "Domain",
+    summary: "Delete glue record",
+    method: "POST",
+    path: "/domain/deleteGlue/{domain}/{subdomain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "domainGetUrlForwarding",
+    group: "Domain",
+    summary: "List URL forwards",
+    method: "POST",
+    path: "/domain/getUrlForwarding/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    listKey: "forwards",
+    outputFields: [
+      { name: "id", type: "string" },
+      { name: "subdomain", type: "string" },
+      { name: "location", type: "string" },
+      { name: "type", type: "string" }
+    ]
+  },
+  {
+    operationId: "getDomainUrlForwarding",
+    group: "Domain",
+    summary: "List URL forwards",
+    method: "GET",
+    path: "/domain/getUrlForwarding/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    listKey: "forwards",
+    outputFields: [
+      { name: "id", type: "string" },
+      { name: "subdomain", type: "string" },
+      { name: "location", type: "string" },
+      { name: "type", type: "string" }
+    ]
+  },
+  {
+    operationId: "domainAddUrlForward",
+    group: "Domain",
+    summary: "Add URL forward",
+    method: "POST",
+    path: "/domain/addUrlForward/{domain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "domainDeleteUrlForward",
+    group: "Domain",
+    summary: "Delete URL forward",
+    method: "POST",
+    path: "/domain/deleteUrlForward/{domain}/{id}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "dnsRetrieve",
+    group: "DNS",
+    summary: "Retrieve all DNS records",
+    method: "POST",
+    path: "/dns/retrieve/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    listKey: "records",
+    outputFields: dnsRecordFields
+  },
+  {
+    operationId: "getDnsRecords",
+    group: "DNS",
+    summary: "Retrieve all DNS records",
+    method: "GET",
+    path: "/dns/retrieve/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    listKey: "records",
+    outputFields: dnsRecordFields
+  },
+  {
+    operationId: "dnsRetrieveById",
+    group: "DNS",
+    summary: "Retrieve DNS record by ID",
+    method: "POST",
+    path: "/dns/retrieve/{domain}/{id}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: dnsRecordFields
+  },
+  {
+    operationId: "getDnsRecordById",
+    group: "DNS",
+    summary: "Retrieve DNS record by ID",
+    method: "GET",
+    path: "/dns/retrieve/{domain}/{id}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    outputFields: dnsRecordFields
+  },
+  {
+    operationId: "dnsRetrieveByNameType",
+    group: "DNS",
+    summary: "Retrieve DNS records by name and type",
+    method: "POST",
+    path: "/dns/retrieveByNameType/{domain}/{type}/{subdomain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    listKey: "records",
+    outputFields: dnsRecordFields
+  },
+  {
+    operationId: "getDnsRecordsByNameType",
+    group: "DNS",
+    summary: "Retrieve DNS records by name and type",
+    method: "GET",
+    path: "/dns/retrieveByNameType/{domain}/{type}/{subdomain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    listKey: "records",
+    outputFields: dnsRecordFields
+  },
+  {
+    operationId: "dnsCreate",
+    group: "DNS",
+    summary: "Create DNS record",
+    method: "POST",
+    path: "/dns/create/{domain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: [{ name: "id", type: "string" }, { name: "status", type: "string" }]
+  },
+  {
+    operationId: "dnsEdit",
+    group: "DNS",
+    summary: "Edit DNS record by ID",
+    method: "POST",
+    path: "/dns/edit/{domain}/{id}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "dnsEditByNameType",
+    group: "DNS",
+    summary: "Edit DNS records by name and type",
+    method: "POST",
+    path: "/dns/editByNameType/{domain}/{type}/{subdomain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "dnsDelete",
+    group: "DNS",
+    summary: "Delete DNS record by ID",
+    method: "POST",
+    path: "/dns/delete/{domain}/{id}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "dnsDeleteByNameType",
+    group: "DNS",
+    summary: "Delete DNS records by name and type",
+    method: "POST",
+    path: "/dns/deleteByNameType/{domain}/{type}/{subdomain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "dnsGetDnssecRecords",
+    group: "DNS",
+    summary: "Get DNSSEC records",
+    method: "POST",
+    path: "/dns/getDnssecRecords/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    listKey: "records",
+    outputFields: [{ name: "keyTag", type: "string" }, { name: "alg", type: "string" }, { name: "digestType", type: "string" }]
+  },
+  {
+    operationId: "getDnssecRecords",
+    group: "DNS",
+    summary: "Get DNSSEC records",
+    method: "GET",
+    path: "/dns/getDnssecRecords/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    listKey: "records",
+    outputFields: [{ name: "keyTag", type: "string" }, { name: "alg", type: "string" }, { name: "digestType", type: "string" }]
+  },
+  {
+    operationId: "dnsCreateDnssecRecord",
+    group: "DNS",
+    summary: "Create DNSSEC record",
+    method: "POST",
+    path: "/dns/createDnssecRecord/{domain}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "dnsDeleteDnssecRecord",
+    group: "DNS",
+    summary: "Delete DNSSEC record",
+    method: "POST",
+    path: "/dns/deleteDnssecRecord/{domain}/{keytag}",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "sslRetrieve",
+    group: "SSL",
+    summary: "Retrieve SSL bundle",
+    method: "POST",
+    path: "/ssl/retrieve/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: [{ name: "certificatechain", type: "string" }, { name: "privatekey", type: "string" }, { name: "publickey", type: "string" }]
+  },
+  {
+    operationId: "getSslRetrieve",
+    group: "SSL",
+    summary: "Retrieve SSL bundle",
+    method: "GET",
+    path: "/ssl/retrieve/{domain}",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    outputFields: [{ name: "certificatechain", type: "string" }, { name: "privatekey", type: "string" }, { name: "publickey", type: "string" }]
+  },
+  {
+    operationId: "emailSetPassword",
+    group: "Email Hosting",
+    summary: "Set email hosting password",
+    method: "POST",
+    path: "/email/setPassword",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "listMarketplaceListingsGet",
+    group: "Marketplace",
+    summary: "List marketplace domains",
+    method: "GET",
+    path: "/marketplace/getAll",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    listKey: "domains",
+    outputFields: [
+      { name: "domain", type: "string" },
+      { name: "tld", type: "string" },
+      { name: "price", type: "number" },
+      { name: "sld_length", type: "integer" }
+    ]
+  },
+  {
+    operationId: "listMarketplaceListings",
+    group: "Marketplace",
+    summary: "List marketplace domains",
+    method: "POST",
+    path: "/marketplace/getAll",
+    mutating: false,
+    auth: "required",
+    authPlacement: "body",
+    listKey: "domains",
+    outputFields: [
+      { name: "domain", type: "string" },
+      { name: "tld", type: "string" },
+      { name: "price", type: "number" },
+      { name: "sld_length", type: "integer" }
+    ]
+  },
+  {
+    operationId: "createAccountInvite",
+    group: "Account",
+    summary: "Create an account registration invite",
+    method: "POST",
+    path: "/account/invite",
+    mutating: true,
+    auth: "required",
+    authPlacement: "body",
+    outputFields: basicFields
+  },
+  {
+    operationId: "getAccountInviteStatus",
+    group: "Account",
+    summary: "Check account invite status",
+    method: "GET",
+    path: "/account/inviteStatus",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    outputFields: basicFields
+  },
+  {
+    operationId: "getBalance",
+    group: "Account",
+    summary: "Get account balance",
+    method: "GET",
+    path: "/account/balance",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    outputFields: [{ name: "balance", type: "integer" }, { name: "display", type: "string" }]
+  },
+  {
+    operationId: "getApiSettings",
+    group: "Account",
+    summary: "Get API spend settings",
+    method: "GET",
+    path: "/account/apiSettings",
+    mutating: false,
+    auth: "required",
+    authPlacement: "header",
+    outputFields: [{ name: "settings", type: "object" }, { name: "monthlySpend", type: "integer" }]
+  }
+];
+
+export const OPERATIONS_BY_ID = new Map(OPERATIONS.map((operation) => [operation.operationId, operation]));
+
+export function requireOperation(operationId: string): OperationDefinition {
+  const operation = OPERATIONS_BY_ID.get(operationId);
+  if (!operation) {
+    throw new Error(`Unknown Porkbun operationId: ${operationId}`);
+  }
+  return operation;
+}

@@ -1,0 +1,50 @@
+name: Bug report
+description: Report reproducible incorrect behavior in porkbun-cli.
+title: "Bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Do not include API keys, authorization codes, account data, or other secrets.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output from `porkbun --version`.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: Provide a sanitized command and relevant output.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and Node.js version.
+    validations:
+      required: true
+  - type: checkboxes
+    id: secrets
+    attributes:
+      label: Sensitive data
+      options:
+        - label: I removed credentials and other sensitive data from this report.
+          required: true
