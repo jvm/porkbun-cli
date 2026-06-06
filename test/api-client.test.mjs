@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fetch, MockAgent } from "undici";
-import { ApiClient, deterministicIdempotencyKey, redactUrl, validateBaseUrl } from "../dist/lib/api-client.js";
+import {
+  ApiClient,
+  deterministicIdempotencyKey,
+  fillPath,
+  redactUrl,
+  validateBaseUrl
+} from "../dist/lib/api-client.js";
 import { CliError } from "../dist/lib/errors.js";
 import { requireOperation } from "../dist/lib/operations.js";
 
@@ -92,6 +98,20 @@ test("request URLs redact sensitive query parameters", () => {
   const url = new URL(value);
   assert.equal(url.searchParams.get("requestToken"), "[REDACTED]");
   assert.equal(url.searchParams.get("domain"), "example.com");
+});
+
+test("path parameters are encoded without regex backtracking", () => {
+  assert.equal(
+    fillPath("/dns/edit/{domain}/{id}", { domain: "example.com", id: "record/1" }),
+    "/dns/edit/example.com/record%2F1"
+  );
+  assert.throws(() => fillPath("/dns/edit/{domain}/{id}", { domain: "example.com" }), {
+    message: "Missing required path parameter: id"
+  });
+  assert.equal(fillPath("/literal/{}/unfinished/{domain", {}), "/literal/{}/unfinished/{domain");
+
+  const adversarialPath = `{${"{".repeat(100_000)}}`;
+  assert.throws(() => fillPath(adversarialPath, {}), CliError);
 });
 
 function headerValue(headers, name) {
