@@ -18,11 +18,16 @@ must not scrape the website, depend on a browser session, or imply support for
 web-only operations. Unsupported web features should be identified clearly and,
 where useful, accompanied by a Porkbun web or knowledge-base handoff.
 
-The TUI will be launched with:
+The primary launch command is:
 
 ```sh
-porkbun tui
+porkbun
 ```
+
+When stdin and stdout are interactive terminals and no subcommand is supplied,
+the CLI launches the TUI. `porkbun tui` remains an explicit alias for
+discoverability, documentation, and scripts that intentionally allocate a
+pseudo-terminal.
 
 It will reuse the existing credential resolution, API client, operation
 definitions, validation, error mapping, idempotency, and mutation safety
@@ -305,13 +310,14 @@ keyboard-accessible.
 
 ### 11.1 Startup and authentication
 
-**TUI-AUTH-001:** `porkbun tui` must fail with a structured, human-readable
-message when stdin or stdout is not a TTY.
+**TUI-AUTH-001:** Bare `porkbun` must launch the TUI when stdin and stdout are
+TTYs and no subcommand is supplied.
 
 **TUI-AUTH-002:** Credential precedence must remain flags, environment, then
 saved profile, matching the existing CLI.
 
-**TUI-AUTH-003:** `porkbun tui --profile <name>` must select a saved profile.
+**TUI-AUTH-003:** `porkbun --profile <name>` and
+`porkbun tui --profile <name>` must select a saved profile.
 
 **TUI-AUTH-004:** If multiple saved profiles exist and no higher-precedence
 credential source is selected, the startup screen must offer a profile picker.
@@ -325,6 +331,11 @@ not prevent domain browsing.
 **TUI-AUTH-006:** Authentication errors must offer retry, profile change, and
 exit. The TUI must not include a form that echoes or persists secret keys in
 MVP; users use `porkbun auth login`.
+
+**TUI-AUTH-007:** Bare `porkbun` in a non-TTY context must never launch the TUI,
+read piped input, or emit terminal control sequences. It must print concise
+command help and exit successfully. Explicit `porkbun tui` in a non-TTY context
+must fail with a structured, human-readable error.
 
 ### 11.2 Domain portfolio
 
@@ -731,14 +742,19 @@ passwords in long-lived global state.
 
 ### 14.5 CLI integration
 
+- Make the root command action launch the TUI when no subcommand is supplied
+  and stdin/stdout are TTYs.
 - Register a `tui` command outside the generated operation command hierarchy.
+- Preserve `porkbun --help`, `porkbun --version`, and every named subcommand;
+  none may initialize the TUI.
 - Global auth/network options that are meaningful to the TUI remain supported:
   `--profile`, credential flags, `--base-url`, `--ipv4`, `--timeout`,
   `--verbose`, and `--no-color`.
 - Output options, `--fields`, `--limit`, `--offset`, `--dry-run`, and `--yes`
   do not control the interactive UI and must be rejected with a clear message
-  when supplied with `porkbun tui`.
-- `porkbun tui --help` must document TTY requirements and key options.
+  when supplied with bare `porkbun` or `porkbun tui`.
+- Root help must state that bare interactive invocation launches the TUI.
+  `porkbun tui --help` must document TTY requirements and key options.
 
 ## 15. Security and Privacy Requirements
 
@@ -864,7 +880,7 @@ Exit criteria: all framework gates in section 14.1 pass.
 
 ### Phase 1: read-only portfolio MVP
 
-- `porkbun tui` startup/auth.
+- Bare `porkbun` and `porkbun tui` startup/auth.
 - Header, navigation, domain list, search/filter/sort/pagination.
 - Domain overview.
 - Read-only DNS, nameservers, balance/settings.
@@ -920,7 +936,8 @@ Target outcomes:
 
 The TUI v1 is ready when:
 
-1. `porkbun tui` is available from the packaged binary and rejects non-TTY use.
+1. Bare interactive `porkbun` launches the TUI; `porkbun tui` is available as
+   an explicit alias; non-TTY behavior follows `TUI-AUTH-007`.
 2. The user can select/resolve credentials and see a domain portfolio.
 3. Search, sort, filters, pagination, refresh, and responsive layouts work.
 4. Domain overview, DNS, nameservers, glue, forwarding, registry DNSSEC, SSL,
