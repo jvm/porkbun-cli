@@ -42,7 +42,7 @@
     "node": ">=24"
   },
   "dependencies": {
-    "commander": "^14.0.2",
+    "commander": "^15.0.0",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
