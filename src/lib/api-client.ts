@@ -241,7 +241,30 @@ export function buildUrl(baseUrl: string, path: string, query: Record<string, un
 }
 
 export function fillPath(path: string, params: Record<string, unknown>): string {
-  return path.replace(/\{([^}]+)\}/g, (_, key: string) => {
+  let result = "";
+  let cursor = 0;
+
+  while (cursor < path.length) {
+    const open = path.indexOf("{", cursor);
+    if (open === -1) {
+      result += path.slice(cursor);
+      break;
+    }
+
+    const close = path.indexOf("}", open + 1);
+    if (close === -1) {
+      result += path.slice(cursor);
+      break;
+    }
+
+    result += path.slice(cursor, open);
+    const key = path.slice(open + 1, close);
+    if (key.length === 0) {
+      result += "{}";
+      cursor = close + 1;
+      continue;
+    }
+
     const value = params[key];
     if (value === undefined || value === null) {
       throw new CliError({
@@ -249,8 +272,11 @@ export function fillPath(path: string, params: Record<string, unknown>): string 
         message: `Missing required path parameter: ${key}`
       });
     }
-    return encodeURIComponent(String(value));
-  });
+    result += encodeURIComponent(String(value));
+    cursor = close + 1;
+  }
+
+  return result;
 }
 
 function authPlacement(operation: OperationDefinition): "header" | "body" {
