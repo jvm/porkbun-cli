@@ -1,15 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getGlobalDispatcher, MockAgent, setGlobalDispatcher } from "undici";
+import { fetch, MockAgent } from "undici";
 import { ApiClient, deterministicIdempotencyKey, redactUrl, validateBaseUrl } from "../dist/lib/api-client.js";
 import { CliError } from "../dist/lib/errors.js";
 import { requireOperation } from "../dist/lib/operations.js";
 
 test("client sends body auth and deterministic idempotency key for mutations", async () => {
-  const previous = getGlobalDispatcher();
   const mockAgent = new MockAgent();
   mockAgent.disableNetConnect();
-  setGlobalDispatcher(mockAgent);
   try {
     const pool = mockAgent.get("https://api.porkbun.com");
     let seen;
@@ -20,7 +18,11 @@ test("client sends body auth and deterministic idempotency key for mutations", a
         return { status: "SUCCESS", domain: "example.com", orderId: 123 };
       });
 
-    const client = new ApiClient({ apiKey: "pk", secretApiKey: "sk" });
+    const client = new ApiClient({
+      apiKey: "pk",
+      secretApiKey: "sk",
+      fetch: withDispatcher(mockAgent)
+    });
     const result = await client.request(requireOperation("domainCreate"), {
       pathParams: { domain: "example.com" },
       body: { cost: 973, agreeToTerms: "yes" }
@@ -40,22 +42,23 @@ test("client sends body auth and deterministic idempotency key for mutations", a
     });
   } finally {
     await mockAgent.close();
-    setGlobalDispatcher(previous);
   }
 });
 
 test("client maps rate-limit responses to structured retryable errors", async () => {
-  const previous = getGlobalDispatcher();
   const mockAgent = new MockAgent();
   mockAgent.disableNetConnect();
-  setGlobalDispatcher(mockAgent);
   try {
     const pool = mockAgent.get("https://api.porkbun.com");
     pool
       .intercept({ method: "GET", path: "/api/json/v3/domain/listAll" })
       .reply(429, { status: "ERROR", code: "RATE_LIMIT_EXCEEDED", message: "Rate limit exceeded." });
 
-    const client = new ApiClient({ apiKey: "pk", secretApiKey: "sk" });
+    const client = new ApiClient({
+      apiKey: "pk",
+      secretApiKey: "sk",
+      fetch: withDispatcher(mockAgent)
+    });
     await assert.rejects(
       () => client.request(requireOperation("getDomains")),
       (error) => {
@@ -68,7 +71,6 @@ test("client maps rate-limit responses to structured retryable errors", async ()
     );
   } finally {
     await mockAgent.close();
-    setGlobalDispatcher(previous);
   }
 });
 
@@ -96,4 +98,8 @@ function headerValue(headers, name) {
   if (typeof headers?.get === "function") return headers.get(name);
   const entry = Object.entries(headers ?? {}).find(([key]) => key.toLowerCase() === name.toLowerCase());
   return entry?.[1];
+}
+
+function withDispatcher(dispatcher) {
+  return (input, init) => fetch(input, { ...init, dispatcher });
 }

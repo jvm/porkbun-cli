@@ -6,6 +6,7 @@ import type { OperationDefinition } from "./operations.js";
 
 export interface ApiClientOptions extends CredentialInput {
   baseUrl?: string;
+  fetch?: typeof globalThis.fetch;
   ipv4?: boolean;
   timeoutMs?: number;
   verbose?: boolean;
@@ -98,7 +99,7 @@ export class ApiClient {
 
     let response: Response;
     try {
-      response = await fetch(url, {
+      response = await (this.options.fetch ?? globalThis.fetch)(url, {
         method,
         headers,
         body: method === "POST" ? JSON.stringify(requestBody ?? {}) : undefined,
