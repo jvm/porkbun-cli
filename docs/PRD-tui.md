@@ -81,7 +81,7 @@ construction for ordinary account management.
 - Preserve or improve the existing CLI's safety guarantees for mutations,
   purchases, secrets, and partial failures.
 - Support accounts ranging from a few domains to at least 10,000 domains.
-- Work in common macOS and Linux terminals supported by Node.js 20.11+.
+- Work in common macOS and Linux terminals supported by Node.js 24+.
 - Keep the TUI optional so existing automation behavior and install paths do not
   regress.
 
@@ -484,6 +484,11 @@ for each domain.
 possible and require the user to review the exact domain, expected charge in
 USD, charge in API pennies, and current account balance.
 
+**TUI-RENEW-003a:** Pricing must be re-verified immediately before submission.
+The review screen must display a "price verified at <ISO timestamp>" indicator.
+If the re-verified price differs from the price shown at review entry, the user
+must be notified and re-confirm before submission is enabled.
+
 **TUI-RENEW-004:** If price cannot be established reliably, disable submission
 rather than guessing the `cost`.
 
@@ -502,6 +507,11 @@ available, premium/special status, and account balance.
 terms acknowledgement, and the fact that registration is billable and normally
 irreversible.
 
+**TUI-REG-003a:** Pricing must be re-verified immediately before submission.
+The review screen must display a "price verified at <ISO timestamp>" indicator.
+If the re-verified price differs from the price shown at review entry, the user
+must be notified and re-confirm before submission is enabled.
+
 **TUI-REG-004:** The final submit step must require typing the domain name or a
 comparably strong explicit confirmation. The API's `agreeToTerms` value must
 only be sent after this confirmation.
@@ -515,6 +525,11 @@ description, and transfer date.
 
 **TUI-XFER-002:** Permit transfer initiation with domain, authorization code,
 and API-provided expected cost.
+
+**TUI-XFER-002a:** Transfer pricing must be re-verified immediately before
+submission. The review screen must display a "price verified at <ISO timestamp>"
+indicator. If the re-verified price differs from the price shown at review
+entry, the user must be notified and re-confirm before submission is enabled.
 
 **TUI-XFER-003:** Treat authorization codes as sensitive: mask by default,
 never include them in logs/errors, and discard them after submission or form
@@ -670,7 +685,7 @@ Rationale:
 - It provides component composition, input handling, and Flexbox-style layout.
 - It can be tested by rendering components and simulating input.
 - OpenTUI is not selected because its official documentation currently states
-  that it is Bun-exclusive, while this project supports Node.js 20.11+ and uses
+  that it is Bun-exclusive, while this project targets Node.js 24+ and uses
   npm.
 
 The prototype must prove:
