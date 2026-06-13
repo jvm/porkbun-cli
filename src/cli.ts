@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
+import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createInterface } from "node:readline/promises";
 import { Command, CommanderError, InvalidArgumentError } from "commander";
@@ -528,6 +529,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+const entryPath = process.argv[1] ? pathToFileURL(realpathSync(process.argv[1])).href : "";
+if (import.meta.url === entryPath) {
   await run();
 }
