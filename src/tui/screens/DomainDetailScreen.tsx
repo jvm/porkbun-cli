@@ -47,14 +47,14 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | undefined>();
   
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
   // Glue mutation state
   const [glueMode, setGlueMode] = useState<'view' | 'create' | 'edit' | 'delete' | 'confirm'>('view');
   const [selectedGlueRecord, setSelectedGlueRecord] = useState<NormalizedGlueRecord | undefined>();
   const [glueFormData, setGlueFormData] = useState<Record<string, unknown>>({});
   const [glueReviewSnapshot, setGlueReviewSnapshot] = useState<ReviewSnapshot | undefined>();
   const [glueSubmitting, setGlueSubmitting] = useState(false);
-  const [glueError, setGlueError] = useState<string | undefined>();
-  const [glueSuccess, setGlueSuccess] = useState<string | undefined>();
   
   // Forward mutation state
   const [forwardMode, setForwardMode] = useState<'view' | 'create' | 'delete' | 'confirm'>('view');
@@ -62,8 +62,6 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
   const [forwardFormData, setForwardFormData] = useState<Record<string, unknown>>({});
   const [forwardReviewSnapshot, setForwardReviewSnapshot] = useState<ReviewSnapshot | undefined>();
   const [forwardSubmitting, setForwardSubmitting] = useState(false);
-  const [forwardError, setForwardError] = useState<string | undefined>();
-  const [forwardSuccess, setForwardSuccess] = useState<string | undefined>();
   
   // DNSSEC mutation state
   const [dnssecMode, setDnssecMode] = useState<'view' | 'create' | 'delete' | 'confirm'>('view');
@@ -71,16 +69,12 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
   const [dnssecFormData, setDnssecFormData] = useState<Record<string, unknown>>({});
   const [dnssecReviewSnapshot, setDnssecReviewSnapshot] = useState<ReviewSnapshot | undefined>();
   const [dnssecSubmitting, setDnssecSubmitting] = useState(false);
-  const [dnssecError, setDnssecError] = useState<string | undefined>();
-  const [dnssecSuccess, setDnssecSuccess] = useState<string | undefined>();
   
   // Nameserver mutation state
   const [nameserverMode, setNameserverMode] = useState<'view' | 'edit' | 'confirm'>('view');
   const [nameserverFormData, setNameserverFormData] = useState<string[]>([]);
   const [nameserverReviewSnapshot, setNameserverReviewSnapshot] = useState<ReviewSnapshot | undefined>();
   const [nameserverSubmitting, setNameserverSubmitting] = useState(false);
-  const [nameserverError, setNameserverError] = useState<string | undefined>();
-  const [nameserverSuccess, setNameserverSuccess] = useState<string | undefined>();
   
   // DNS mutation state
   const [dnsMode, setDnsMode] = useState<DnsMode>('view');
@@ -88,8 +82,6 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
   const [dnsFormData, setDnsFormData] = useState<Record<string, unknown>>({});
   const [dnsReviewSnapshot, setDnsReviewSnapshot] = useState<ReviewSnapshot | undefined>();
   const [dnsSubmitting, setDnsSubmitting] = useState(false);
-  const [dnsError, setDnsError] = useState<string | undefined>();
-  const [dnsSuccess, setDnsSuccess] = useState<string | undefined>();
 
   // Renewal mutation state
   const [renewMode, setRenewMode] = useState<'idle' | 'form' | 'submitting' | 'success' | 'error'>('idle');
@@ -319,7 +311,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setDnsMode('view');
               setSelectedDnsRecord(undefined);
               setDnsFormData({});
-              setDnsError(undefined);
+              setStatus(null);
             }}
           />
         )}
@@ -340,15 +332,15 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             confirmationLevel="disruptive"
             onConfirm={async () => {
               setDnsSubmitting(true);
-              setDnsError(undefined);
+              setStatus(null);
               try {
                 await service.deleteDnsRecord(domain, selectedDnsRecord.id);
-                setDnsSuccess(`Deleted DNS record ${selectedDnsRecord.id}`);
+                setStatus({ type: 'success', message: `Deleted DNS record ${selectedDnsRecord.id}` });
                 setDnsMode('view');
                 setSelectedDnsRecord(undefined);
                 await loadDns();
               } catch (err) {
-                setDnsError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               } finally {
                 setDnsSubmitting(false);
               }
@@ -371,23 +363,21 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             confirmationLevel={dnsReviewSnapshot.classification === 'destructive' ? 'disruptive' : 'standard'}
             onConfirm={async () => {
               setDnsSubmitting(true);
-              setDnsError(undefined);
+              setStatus(null);
               try {
                 if (dnsMode === 'confirm' && selectedDnsRecord) {
-                  // Edit
                   await service.editDnsRecord(domain, selectedDnsRecord.id, dnsFormData);
-                  setDnsSuccess(`Edited DNS record ${selectedDnsRecord.id}`);
+                  setStatus({ type: 'success', message: `Edited DNS record ${selectedDnsRecord.id}` });
                 } else {
-                  // Create
                   await service.createDnsRecord(domain, dnsFormData);
-                  setDnsSuccess('Created DNS record');
+                  setStatus({ type: 'success', message: 'Created DNS record' });
                 }
                 setDnsMode('view');
                 setSelectedDnsRecord(undefined);
                 setDnsFormData({});
                 await loadDns();
               } catch (err) {
-                setDnsError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               } finally {
                 setDnsSubmitting(false);
               }
@@ -433,7 +423,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             onCancel={() => {
               setNameserverMode('view');
               setNameserverFormData([]);
-              setNameserverError(undefined);
+              setStatus(null);
             }}
           />
         )}
@@ -444,15 +434,16 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             confirmationLevel="disruptive"
             onConfirm={async () => {
               setNameserverSubmitting(true);
+              setStatus(null);
               try {
                 await service.updateNameservers(domain, nameserverFormData);
-                setNameserverSuccess('Nameservers updated successfully');
+                setStatus({ type: 'success', message: 'Nameservers updated successfully' });
                 setNameserverMode('view');
                 setNameserverFormData([]);
                 setNameserverReviewSnapshot(undefined);
                 await loadNameservers();
               } catch (err) {
-                setNameserverError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               } finally {
                 setNameserverSubmitting(false);
               }
@@ -514,7 +505,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
                 setGlueFormData({});
                 setSelectedGlueRecord(undefined);
               } catch (err) {
-                setGlueError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               }
             }}
             onCancel={() => {
@@ -538,7 +529,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
                 setGlueReviewSnapshot(undefined);
                 setSelectedGlueRecord(undefined);
               } catch (err) {
-                setGlueError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               } finally {
                 setGlueSubmitting(false);
               }
@@ -586,7 +577,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
                 await loadForwards();
                 setForwardMode('view');
               } catch (err) {
-                setForwardError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               }
             }}
             onCancel={() => setForwardMode('view')}
@@ -606,7 +597,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
                 setForwardReviewSnapshot(undefined);
                 setSelectedForward(undefined);
               } catch (err) {
-                setForwardError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               } finally {
                 setForwardSubmitting(false);
               }
@@ -654,7 +645,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
                 await loadDnssec();
                 setDnssecMode('view');
               } catch (err) {
-                setDnssecError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               }
             }}
             onCancel={() => setDnssecMode('view')}
@@ -674,7 +665,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
                 setDnssecReviewSnapshot(undefined);
                 setSelectedDnssecRecord(undefined);
               } catch (err) {
-                setDnssecError(err instanceof Error ? err.message : String(err));
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
               } finally {
                 setDnssecSubmitting(false);
               }
@@ -696,55 +687,11 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
         {activeTab === 'transfer' && <TransferTab domain={domain} service={service} theme={theme} />}
       </Box>
 
-      {/* Status messages */}
-      {dnsError && (
+      {status && (
         <Box marginTop={1}>
-          <Text color={theme.colors.danger}>Error: {dnsError}</Text>
-        </Box>
-      )}
-      {dnsSuccess && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.success}>{dnsSuccess}</Text>
-        </Box>
-      )}
-      {glueError && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.danger}>Error: {glueError}</Text>
-        </Box>
-      )}
-      {glueSuccess && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.success}>{glueSuccess}</Text>
-        </Box>
-      )}
-      {forwardError && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.danger}>Error: {forwardError}</Text>
-        </Box>
-      )}
-      {forwardSuccess && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.success}>{forwardSuccess}</Text>
-        </Box>
-      )}
-      {dnssecError && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.danger}>Error: {dnssecError}</Text>
-        </Box>
-      )}
-      {dnssecSuccess && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.success}>{dnssecSuccess}</Text>
-        </Box>
-      )}
-      {nameserverError && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.danger}>Error: {nameserverError}</Text>
-        </Box>
-      )}
-      {nameserverSuccess && (
-        <Box marginTop={1}>
-          <Text color={theme.colors.success}>{nameserverSuccess}</Text>
+          <Text color={status.type === 'error' ? theme.colors.danger : theme.colors.success}>
+            {status.type === 'error' ? 'Error: ' : ''}{status.message}
+          </Text>
         </Box>
       )}
 

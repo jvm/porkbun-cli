@@ -24,7 +24,6 @@ interface DomainsScreenProps {
 }
 
 type SearchPhase = 'inactive' | 'active';
-type NavItem = 'domains' | 'transfers' | 'register' | 'account' | 'help';
 
 const FRESHNESS_WINDOW_MS = 30_000;
 
@@ -38,7 +37,6 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set());
   const [freshnessTimestamp, setFreshnessTimestamp] = useState<number | undefined>();
-  const [activeNav, setActiveNav] = useState<NavItem>('domains');
   
   // Auto-renew mutation state
   const [autoRenewMode, setAutoRenewMode] = useState<'idle' | 'confirm' | 'submitting' | 'success' | 'error'>('idle');
@@ -141,7 +139,6 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
     }
 
     // Navigation
-    if (char === '1') { setActiveNav('domains'); return; }
     if (char === '2') { onOpenTransfers(); return; }
     if (char === '3') { onOpenRegister(); return; }
     if (char === '4') { onOpenAccount(); return; }

@@ -209,22 +209,6 @@ function Header({ theme, profileName, credentialSource, balanceCents }: {
   );
 }
 
-function PlaceholderScreen({ name, theme, onBack }: { name: string; theme: Theme; onBack: () => void }) {
-  useInput((char, key) => {
-    if (key.escape || char === 'q') onBack();
-  });
-
-  return (
-    <Box flexDirection="column" padding={1}>
-      <Text bold color={theme.colors.primary}>{name}</Text>
-      <Text dimColor> | Implementation pending.</Text>
-      <Box marginTop={1}>
-        <Text dimColor>Press Esc or q to go back.</Text>
-      </Box>
-    </Box>
-  );
-}
-
 function AccountScreen({ service, theme, balanceCents, onBack }: {
   service: TuiApiService;
   theme: Theme;
