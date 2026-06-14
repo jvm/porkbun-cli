@@ -496,6 +496,10 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             theme={theme}
             mode={glueMode}
             initialRecord={selectedGlueRecord}
+            initialValues={glueFormData.hostname || glueFormData.ips ? {
+              hostname: glueFormData.hostname as string | undefined,
+              ips: glueFormData.ips as string[] | undefined,
+            } : undefined}
             onSubmit={(formData) => {
               setGlueFormData(formData as Record<string, unknown>);
               const isEdit = glueMode === 'edit' && !!selectedGlueRecord;
@@ -607,6 +611,13 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
         {activeTab === 'forwards' && forwardMode === 'create' && (
           <ForwardForm
             theme={theme}
+            initialValues={Object.keys(forwardFormData).length > 0 ? {
+              subdomain: forwardFormData.subdomain as string | undefined,
+              location: forwardFormData.location as string | undefined,
+              type: forwardFormData.type as string | undefined,
+              includePath: forwardFormData.includePath as string | undefined,
+              wildcard: forwardFormData.wildcard as string | undefined,
+            } : undefined}
             onSubmit={(formData) => {
               setForwardFormData(formData as Record<string, unknown>);
               setForwardReviewSnapshot({
@@ -710,6 +721,12 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
         {activeTab === 'dnssec' && dnssecMode === 'create' && (
           <DnssecRecordForm
             theme={theme}
+            initialValues={Object.keys(dnssecFormData).length > 0 ? {
+              keyTag: String(dnssecFormData.keyTag ?? ''),
+              alg: String(dnssecFormData.alg ?? ''),
+              digestType: String(dnssecFormData.digestType ?? ''),
+              digest: String(dnssecFormData.digest ?? ''),
+            } : undefined}
             onSubmit={(formData) => {
               setDnssecFormData(formData as Record<string, unknown>);
               setDnssecReviewSnapshot({

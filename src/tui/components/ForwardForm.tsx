@@ -4,16 +4,17 @@ import TextInput from 'ink-text-input';
 
 export interface ForwardFormProps {
   theme: any;
+  initialValues?: { subdomain?: string; location?: string; type?: string; includePath?: string; wildcard?: string };
   onSubmit: (data: { subdomain: string; location: string; type: string; includePath: string; wildcard: string }) => void;
   onCancel: () => void;
 }
 
-export function ForwardForm({ theme, onSubmit, onCancel }: ForwardFormProps) {
-  const [subdomain, setSubdomain] = useState('');
-  const [location, setLocation] = useState('');
-  const [type, setType] = useState('temporary');
-  const [includePath, setIncludePath] = useState('no');
-  const [wildcard, setWildcard] = useState('no');
+export function ForwardForm({ theme, initialValues, onSubmit, onCancel }: ForwardFormProps) {
+  const [subdomain, setSubdomain] = useState(initialValues?.subdomain ?? '');
+  const [location, setLocation] = useState(initialValues?.location ?? '');
+  const [type, setType] = useState(initialValues?.type ?? 'temporary');
+  const [includePath, setIncludePath] = useState(initialValues?.includePath ?? 'no');
+  const [wildcard, setWildcard] = useState(initialValues?.wildcard ?? 'no');
   const [focusedField, setFocusedField] = useState(0);
 
   useInput((input, key) => {

@@ -4,15 +4,16 @@ import TextInput from 'ink-text-input';
 
 export interface DnssecRecordFormProps {
   theme: any;
+  initialValues?: { keyTag?: string; alg?: string; digestType?: string; digest?: string };
   onSubmit: (data: { keyTag: number; alg: number; digestType: number; digest: string }) => void;
   onCancel: () => void;
 }
 
-export function DnssecRecordForm({ theme, onSubmit, onCancel }: DnssecRecordFormProps) {
-  const [keyTag, setKeyTag] = useState('');
-  const [alg, setAlg] = useState('');
-  const [digestType, setDigestType] = useState('');
-  const [digest, setDigest] = useState('');
+export function DnssecRecordForm({ theme, initialValues, onSubmit, onCancel }: DnssecRecordFormProps) {
+  const [keyTag, setKeyTag] = useState(initialValues?.keyTag ?? '');
+  const [alg, setAlg] = useState(initialValues?.alg ?? '');
+  const [digestType, setDigestType] = useState(initialValues?.digestType ?? '');
+  const [digest, setDigest] = useState(initialValues?.digest ?? '');
   const [focusedField, setFocusedField] = useState(0);
 
   useInput((input, key) => {

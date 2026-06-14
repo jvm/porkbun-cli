@@ -7,13 +7,18 @@ export interface GlueRecordFormProps {
   theme: any;
   mode: 'create' | 'edit';
   initialRecord?: NormalizedGlueRecord;
+  // When the user returns to the form from the confirmation step ('b'),
+  // re-seed it from these values so the in-progress edits are not lost.
+  initialValues?: { hostname?: string; ips?: string[] };
   onSubmit: (data: { hostname: string; ips: string[] }) => void;
   onCancel: () => void;
 }
 
-export function GlueRecordForm({ theme, mode, initialRecord, onSubmit, onCancel }: GlueRecordFormProps) {
-  const [hostname, setHostname] = useState(initialRecord?.subdomain || '');
-  const [ipsText, setIpsText] = useState(initialRecord?.ips.join(', ') || '');
+export function GlueRecordForm({ theme, mode, initialRecord, initialValues, onSubmit, onCancel }: GlueRecordFormProps) {
+  const seedHostname = initialValues?.hostname ?? initialRecord?.subdomain ?? '';
+  const seedIpsText = initialValues?.ips?.join(', ') ?? initialRecord?.ips.join(', ') ?? '';
+  const [hostname, setHostname] = useState(seedHostname);
+  const [ipsText, setIpsText] = useState(seedIpsText);
   const [focusedField, setFocusedField] = useState(0);
   const isEdit = mode === 'edit';
 
