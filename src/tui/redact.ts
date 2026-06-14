@@ -16,7 +16,10 @@ const SENSITIVE_KEY_PATTERNS = [
   /token/i,
 ];
 
-// eslint-disable-next-line no-control-regex
+// Strip control characters: matches bytes 0x00-0x1F except \t (0x09),
+// \n (0x0A), \r (0x0D), and DEL (0x7F). The `s` flag lets `.` cross
+// line breaks. We don't use the `u` flag because the input may be a
+// partially-decoded byte stream.
 const CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
 const ANSI_ESCAPE = /\x1B\[[0-9;]*[A-Za-z]/g;
 const MAX_FIELD_LENGTH = 200;
