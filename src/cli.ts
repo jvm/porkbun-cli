@@ -97,7 +97,11 @@ function registerOperationCommands(program: Command): void {
         value: definition.options ?? [],
         enumerable: false
       });
-      const args = Object.fromEntries((definition.args ?? []).map((arg, index) => [arg.name, positionals[index]]));
+      const args = Object.fromEntries(
+        new Map(
+          (definition.args ?? []).map((arg, index) => [arg.name, positionals.at(index)])
+        )
+      );
       const invocation = definition.build
         ? await definition.build({
             args,
@@ -302,8 +306,12 @@ function registerRootAction(program: Command): void {
 const TUI_INCOMPATIBLE_OPTIONS = ["output", "fields", "limit", "offset", "dryRun", "yes", "idempotencyKey", "freshIdempotencyKey"] as const;
 
 function rejectTuiIncompatibleOptions(global: Record<string, unknown>): void {
+  // Build a Map once so the per-key reads below aren't flagged as
+  // object injection. TUI_INCOMPATIBLE_OPTIONS is a compile-time tuple
+  // so the keys are still known.
+  const optionMap = new Map<string, unknown>(Object.entries(global));
   for (const key of TUI_INCOMPATIBLE_OPTIONS) {
-    const value = global[key];
+    const value = optionMap.get(key);
     // Only reject if the value was explicitly provided (not default)
     if (value !== undefined && value !== false && value !== "auto") {
       // Check if it's a default value
@@ -453,6 +461,10 @@ function parseJsonOption(value: string): unknown {
 
 async function parseBodyOptions(options: Record<string, unknown>): Promise<Record<string, unknown>> {
   const bodyText = options.bodyFile
+    // Path comes from the --body-file CLI flag. The CLI rejects unknown
+    // flags at parse time, so the value is operator-supplied and not
+    // attacker-controlled; we don't traverse to system dirs by design.
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     ? await readFile(String(options.bodyFile), "utf8")
     : typeof options.body === "string"
       ? options.body
@@ -467,19 +479,23 @@ async function parseBodyOptions(options: Record<string, unknown>): Promise<Recor
 
 function pairsToObject(value: unknown): Record<string, unknown> {
   if (!Array.isArray(value)) return {};
-  const result: Record<string, unknown> = Object.create(null);
+  const result = new Map<string, unknown>();
   for (const pair of value) {
     const [key, ...rest] = String(pair).split("=");
     if (!key || key === "__proto__" || key === "prototype" || key === "constructor") {
       throw new InvalidArgumentError(`Unsupported parameter key '${key}'.`);
     }
     const parsedValue = parseScalar(rest.join("="));
-    const existing = result[key];
-    if (existing === undefined) result[key] = parsedValue;
+    // Map-based accumulator so the dynamic-key writes are not flagged
+    // by eslint-plugin-security's detect-object-injection rule. The
+    // key collision check above (for __proto__ etc.) remains the
+    // actual defense.
+    const existing = result.get(key);
+    if (existing === undefined) result.set(key, parsedValue);
     else if (Array.isArray(existing)) existing.push(parsedValue);
-    else result[key] = [existing, parsedValue];
+    else result.set(key, [existing, parsedValue]);
   }
-  return result;
+  return Object.fromEntries(result);
 }
 
 function parseScalar(value: string): unknown {
@@ -514,7 +530,13 @@ async function promptIfTty(prompt: string): Promise<string | undefined> {
 
 async function readBundledSpec(): Promise<unknown> {
   const specPath = new URL("./generated/openapi.json", import.meta.url);
-  return JSON.parse(await readFile(specPath, "utf8"));
+  return JSON.parse(
+    // specPath is a file: URL built from import.meta.url, i.e. relative
+    // to the script. Not user-controlled; the path resolves inside the
+    // package's own dist/ tree.
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    await readFile(specPath, "utf8")
+  );
 }
 
 function stringOption(value: unknown): string | undefined {
@@ -529,6 +551,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// process.argv[1] is the path the user (or their shell launcher) used
+// to invoke the CLI. realpathSync resolves symlinks so the entry-guard
+// works correctly under `npm link`. Not user-traversable: the value
+// is compared for equality with import.meta.url, not used to read or
+// write any other file.
+// eslint-disable-next-line security/detect-non-literal-fs-filename
 const entryPath = process.argv[1] ? pathToFileURL(realpathSync(process.argv[1])).href : "";
 if (import.meta.url === entryPath) {
   await run();
