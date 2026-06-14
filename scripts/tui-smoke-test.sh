@@ -6,6 +6,7 @@ set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SELF_DIR/.." && pwd)"
+CLI_BIN="node $PROJECT_DIR/dist/cli.js"
 SKILL_DIR="$HOME/.pi/agent/skills/tui-testing"
 TUI_LIB="$SKILL_DIR/scripts/tui-lib.sh"
 
@@ -23,11 +24,8 @@ echo "=== Porkbun TUI Smoke Test ==="
 echo "Artifact dir: $TUI_ARTIFACT_DIR"
 echo ""
 
-# -------------------------------------------------------
-# Step 1: Verify credentials (pre-flight check)
-# -------------------------------------------------------
 echo "1. Pre-flight: validating credentials..."
-PING_OUTPUT="$(node "$PROJECT_DIR/dist/cli.js" ping test -o json 2>/dev/null || true)"
+PING_OUTPUT="$($CLI_BIN ping test -o json 2>/dev/null || true)"
 if echo "$PING_OUTPUT" | grep -q '"status":"SUCCESS"'; then
   echo "   ✓ Credentials valid, API reachable"
 else
@@ -41,7 +39,7 @@ fi
 # -------------------------------------------------------
 echo ""
 echo "2. Launching TUI in tmux (120x40)..."
-tui_start "node $PROJECT_DIR/dist/cli.js tui" 120 40
+tui_start "$CLI_BIN tui" 120 40
 echo "   ✓ Session created (pane: $tui_pane_id)"
 
 # -------------------------------------------------------
@@ -49,7 +47,6 @@ echo "   ✓ Session created (pane: $tui_pane_id)"
 # -------------------------------------------------------
 echo ""
 echo "3. Waiting for credential validation..."
-# The startup screen shows "Validating credentials..." immediately
 if tui_wait_ready "Validating credentials" 10 0.5 1; then
   echo "   ✓ Startup validation phase reached"
 else
@@ -62,7 +59,7 @@ fi
 # Step 4: Wait for Domains screen (after successful auth)
 # -------------------------------------------------------
 echo ""
-echo "4. Waiting for Domains screen (auth completes + domain list loads)..."
+echo "4. Waiting for Domains screen..."
 if tui_wait_ready "Domains" 30 0.5 0; then
   echo "   ✓ Domains screen loaded successfully"
 else
@@ -81,28 +78,19 @@ echo "5. Asserting Domains screen content..."
 tui_assert_screen "Domains"
 echo "   ✓ 'Domains' header present"
 
-# Check that at least one domain name shows up (if domains exist)
 SCREEN="$(tui_capture_visible)"
 DOMAIN_COUNT="$(echo "$SCREEN" | grep -oE '\([0-9]+\)' | head -1 | tr -d '()')"
-echo "   Domain count from screen: ${DOMAIN_COUNT:-unknown}"
 
 if [ -n "$DOMAIN_COUNT" ] && [ "$DOMAIN_COUNT" -gt 0 ]; then
-  echo "   ✓ Domain list has $DOMAIN_COUNT domains"
-  # Check for .com .org .sh etc — any domain extension in the list
-  if echo "$SCREEN" | grep -qE '\.[a-z]{2,}'; then
-    echo "   ✓ Domain names visible in list"
-  else
-    echo "   ⚠  No domain extensions found in visible area (may need scrolling)"
-  fi
+  echo "   ✓ $DOMAIN_COUNT domains listed"
 else
   echo "   ⚠  No domain count visible or count is 0"
 fi
 
-# Check for balance
 if echo "$SCREEN" | grep -q 'Balance:'; then
-  echo "   ✓ Account balance visible"
+  echo "   ✓ Balance showing"
 else
-  echo "   ⚠  Balance not visible (may be loading or not shown)"
+  echo "   ⚠  Balance not visible (may be loading)"
 fi
 
 # -------------------------------------------------------
@@ -110,20 +98,15 @@ fi
 # -------------------------------------------------------
 echo ""
 echo "6. Testing navigation..."
-# Press down arrow a few times to navigate
-tui_send_keys Down
-sleep 0.5
-tui_send_keys Down
-sleep 0.5
-tui_send_keys Down
-sleep 0.5
+tui_send_keys Down; sleep 0.5
+tui_send_keys Down; sleep 0.5
+tui_send_keys Down; sleep 0.5
 
-# Check that the screen changed (selection moved)
 SCREEN_AFTER_NAV="$(tui_capture_visible)"
-if [ "$SCREEN" != "$SCREEN_AFTER_NAV" ] || [ -n "$SCREEN_AFTER_NAV" ]; then
-  echo "   ✓ Navigation keys processed (screen state changed)"
+if [ "$SCREEN" != "$SCREEN_AFTER_NAV" ]; then
+  echo "   ✓ Selection moved after navigation"
 else
-  echo "   ⚠  Screen did not visibly change after navigation (may render identically with ANSI stripped)"
+  echo "   ⚠  Screen unchanged after Down keys (may need more presses)"
 fi
 
 # -------------------------------------------------------
@@ -131,28 +114,17 @@ fi
 # -------------------------------------------------------
 echo ""
 echo "7. Opening domain detail..."
-# Try pressing Enter on current selection
 tui_send_keys Enter
-sleep 3
 
-DETAIL_SCREEN="$(tui_capture_visible)"
-
-if echo "$DETAIL_SCREEN" | grep -qE '(Overview|DNS|Nameservers|Domain Detail|SSL|Back)'; then
+if tui_wait_ready "overview" 15 0.5 1; then
   echo "   ✓ Domain detail screen opened"
-  
-  # Go back
   echo "   Navigating back..."
   tui_send_keys Escape
-  sleep 1
-  
   if tui_wait_ready "Domains" 10 0.5 0; then
     echo "   ✓ Returned to Domains screen"
-  else
-    echo "   ⚠  Could not return to Domains screen (may already be back)"
   fi
 else
-  echo "   ⚠  Domain detail screen not detected (no detail tabs visible)"
-  echo "   (This can happen if Enter doesn't trigger navigation, or domain list is empty)"
+  echo "   ⚠  Domain detail screen not detected"
 fi
 
 # -------------------------------------------------------
@@ -161,11 +133,7 @@ fi
 echo ""
 echo "8. Collecting artifacts..."
 tui_collect_artifacts "final"
-echo "   ✓ Artifacts saved to $TUI_ARTIFACT_DIR/final/"
-
-# -------------------------------------------------------
-# Step 9: Clean exit
-# -------------------------------------------------------
+echo "   ✓ Saved to $TUI_ARTIFACT_DIR/final/"
 echo ""
 echo "=== TUI Smoke Test PASSED ==="
 echo "Artifacts: $TUI_ARTIFACT_DIR"
