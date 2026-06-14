@@ -504,26 +504,65 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             theme={theme}
             mode={glueMode}
             initialRecord={selectedGlueRecord}
-            onSubmit={async (formData) => {
-              try {
-                if (glueMode === 'edit' && selectedGlueRecord) {
-                  await service.updateGlueRecord(domain, selectedGlueRecord.subdomain, formData.ips as string[]);
-                } else {
-                  await service.createGlueRecord(domain, formData.hostname as string, formData.ips as string[]);
-                }
-                await loadGlue();
-                setGlueMode('view');
-                setGlueFormData({});
-                setSelectedGlueRecord(undefined);
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              }
+            onSubmit={(formData) => {
+              setGlueFormData(formData as Record<string, unknown>);
+              const isEdit = glueMode === 'edit' && !!selectedGlueRecord;
+              setGlueReviewSnapshot({
+                operation: isEdit ? 'Update Glue Record' : 'Create Glue Record',
+                target: domain,
+                classification: 'mutating',
+                fields: [
+                  { label: 'Hostname', value: formData.hostname },
+                  { label: 'IP Addresses', value: formData.ips.join(', ') },
+                ],
+              });
+              setGlueMode('confirm');
             }}
             onCancel={() => {
               setGlueMode('view');
               setGlueFormData({});
               setSelectedGlueRecord(undefined);
             }}
+          />
+        )}
+        {activeTab === 'glue' && glueMode === 'confirm' && glueReviewSnapshot && (
+          <MutationConfirm
+            theme={theme}
+            review={glueReviewSnapshot}
+            confirmationLevel="standard"
+            onConfirm={async () => {
+              setGlueSubmitting(true);
+              try {
+                const isEdit = !!selectedGlueRecord;
+                const ips = (glueFormData.ips as string[]) ?? [];
+                if (isEdit) {
+                  await service.updateGlueRecord(domain, selectedGlueRecord!.subdomain, ips);
+                } else {
+                  await service.createGlueRecord(domain, glueFormData.hostname as string, ips);
+                }
+                await loadGlue();
+                setStatus({ type: 'success', message: isEdit ? 'Glue record updated' : 'Glue record created' });
+                setGlueMode('view');
+                setGlueFormData({});
+                setGlueReviewSnapshot(undefined);
+                setSelectedGlueRecord(undefined);
+              } catch (err) {
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
+              } finally {
+                setGlueSubmitting(false);
+              }
+            }}
+            onBack={() => {
+              setGlueReviewSnapshot(undefined);
+              setGlueMode(selectedGlueRecord ? 'edit' : 'create');
+            }}
+            onCancel={() => {
+              setGlueMode('view');
+              setGlueFormData({});
+              setGlueReviewSnapshot(undefined);
+              setSelectedGlueRecord(undefined);
+            }}
+            submitting={glueSubmitting}
           />
         )}
         {activeTab === 'glue' && glueMode === 'delete' && glueReviewSnapshot && (
@@ -582,16 +621,55 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
         {activeTab === 'forwards' && forwardMode === 'create' && (
           <ForwardForm
             theme={theme}
-            onSubmit={async (formData) => {
-              try {
-                await service.addUrlForward(domain, formData);
-                await loadForwards();
-                setForwardMode('view');
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              }
+            onSubmit={(formData) => {
+              setForwardFormData(formData as Record<string, unknown>);
+              setForwardReviewSnapshot({
+                operation: 'Create URL Forward',
+                target: domain,
+                classification: 'mutating',
+                fields: [
+                  { label: 'Subdomain', value: formData.subdomain || '(root)' },
+                  { label: 'Location', value: formData.location },
+                  { label: 'Type', value: formData.type },
+                  { label: 'Include Path', value: formData.includePath },
+                  { label: 'Wildcard', value: formData.wildcard },
+                ],
+              });
+              setForwardMode('confirm');
             }}
             onCancel={() => setForwardMode('view')}
+          />
+        )}
+        {activeTab === 'forwards' && forwardMode === 'confirm' && forwardReviewSnapshot && (
+          <MutationConfirm
+            theme={theme}
+            review={forwardReviewSnapshot}
+            confirmationLevel="standard"
+            onConfirm={async () => {
+              setForwardSubmitting(true);
+              try {
+                await service.addUrlForward(domain, forwardFormData);
+                await loadForwards();
+                setStatus({ type: 'success', message: 'URL forward created' });
+                setForwardMode('view');
+                setForwardFormData({});
+                setForwardReviewSnapshot(undefined);
+              } catch (err) {
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
+              } finally {
+                setForwardSubmitting(false);
+              }
+            }}
+            onBack={() => {
+              setForwardReviewSnapshot(undefined);
+              setForwardMode('create');
+            }}
+            onCancel={() => {
+              setForwardMode('view');
+              setForwardFormData({});
+              setForwardReviewSnapshot(undefined);
+            }}
+            submitting={forwardSubmitting}
           />
         )}
         {activeTab === 'forwards' && forwardMode === 'delete' && forwardReviewSnapshot && (
@@ -650,16 +728,54 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
         {activeTab === 'dnssec' && dnssecMode === 'create' && (
           <DnssecRecordForm
             theme={theme}
-            onSubmit={async (formData) => {
-              try {
-                await service.createDnssecRecord(domain, formData);
-                await loadDnssec();
-                setDnssecMode('view');
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              }
+            onSubmit={(formData) => {
+              setDnssecFormData(formData as Record<string, unknown>);
+              setDnssecReviewSnapshot({
+                operation: 'Create DNSSEC Record',
+                target: domain,
+                classification: 'mutating',
+                fields: [
+                  { label: 'Key Tag', value: String(formData.keyTag ?? '') },
+                  { label: 'Algorithm', value: String(formData.alg ?? '') },
+                  { label: 'Digest Type', value: String(formData.digestType ?? '') },
+                  { label: 'Digest', value: String(formData.digest ?? '') },
+                ],
+              });
+              setDnssecMode('confirm');
             }}
             onCancel={() => setDnssecMode('view')}
+          />
+        )}
+        {activeTab === 'dnssec' && dnssecMode === 'confirm' && dnssecReviewSnapshot && (
+          <MutationConfirm
+            theme={theme}
+            review={dnssecReviewSnapshot}
+            confirmationLevel="standard"
+            onConfirm={async () => {
+              setDnssecSubmitting(true);
+              try {
+                await service.createDnssecRecord(domain, dnssecFormData);
+                await loadDnssec();
+                setStatus({ type: 'success', message: 'DNSSEC record created' });
+                setDnssecMode('view');
+                setDnssecFormData({});
+                setDnssecReviewSnapshot(undefined);
+              } catch (err) {
+                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
+              } finally {
+                setDnssecSubmitting(false);
+              }
+            }}
+            onBack={() => {
+              setDnssecReviewSnapshot(undefined);
+              setDnssecMode('create');
+            }}
+            onCancel={() => {
+              setDnssecMode('view');
+              setDnssecFormData({});
+              setDnssecReviewSnapshot(undefined);
+            }}
+            submitting={dnssecSubmitting}
           />
         )}
         {activeTab === 'dnssec' && dnssecMode === 'delete' && dnssecReviewSnapshot && (
