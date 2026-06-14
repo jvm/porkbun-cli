@@ -174,7 +174,7 @@ export class TuiApiService {
         pathParams: { domain },
       });
       const record = asRecord(data);
-      const records = normalizeGlueResponse(record);
+      const records = normalizeGlueResponse(record, domain);
       return { status: 'loaded', data: records, timestamp: Date.now() };
     } catch (error) {
       return errorState(error);
@@ -489,7 +489,7 @@ function normalizeDnsRecord(raw: Record<string, unknown>): NormalizedDnsRecord {
   };
 }
 
-function normalizeGlueResponse(record: Record<string, unknown>): NormalizedGlueRecord[] {
+function normalizeGlueResponse(record: Record<string, unknown>, parentDomain: string): NormalizedGlueRecord[] {
   const hosts = record.hosts ?? record.records;
   if (!hosts) return [];
 
@@ -503,7 +503,7 @@ function normalizeGlueResponse(record: Record<string, unknown>): NormalizedGlueR
         const ipv6 = asStringArray(data.v6 ?? data.ipv6);
         return {
           hostname,
-          subdomain: hostname,
+          subdomain: deriveSubdomain(hostname, parentDomain),
           ipv4,
           ipv6,
           ips: [...ipv4, ...ipv6],
@@ -515,7 +515,7 @@ function normalizeGlueResponse(record: Record<string, unknown>): NormalizedGlueR
       const subdomain = String(r.subdomain ?? '');
       const ips = asArray(r.ips).map(String);
       return {
-        hostname: subdomain,
+        hostname: subdomain ? `${subdomain}.${parentDomain}` : parentDomain,
         subdomain,
         ipv4: ips.filter(ip => !ip.includes(':')),
         ipv6: ips.filter(ip => ip.includes(':')),
@@ -612,6 +612,20 @@ function asArray(value: unknown): Array<Record<string, unknown>> {
 function asStringArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.map(String);
   return [];
+}
+
+/**
+ * Strip the parent domain suffix from a fully qualified hostname to recover
+ * the glue-record subdomain label (e.g. "ns1.example.com" + "example.com" -> "ns1").
+ * Returns the original hostname if it does not end with the parent domain.
+ */
+function deriveSubdomain(hostname: string, parentDomain: string): string {
+  const suffix = `.${parentDomain.toLowerCase()}`;
+  const lower = hostname.toLowerCase();
+  if (lower.endsWith(suffix) && hostname.length > parentDomain.length + 1) {
+    return hostname.slice(0, -parentDomain.length - 1);
+  }
+  return hostname;
 }
 
 function normalizeLabels(value: unknown): string[] | undefined {

@@ -496,7 +496,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             onSubmit={async (formData) => {
               try {
                 if (glueMode === 'edit' && selectedGlueRecord) {
-                  await service.updateGlueRecord(domain, selectedGlueRecord.hostname, formData.ips as string[]);
+                  await service.updateGlueRecord(domain, selectedGlueRecord.subdomain, formData.ips as string[]);
                 } else {
                   await service.createGlueRecord(domain, formData.hostname as string, formData.ips as string[]);
                 }
@@ -523,7 +523,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             onConfirm={async () => {
               setGlueSubmitting(true);
               try {
-                await service.deleteGlueRecord(domain, selectedGlueRecord!.hostname);
+                await service.deleteGlueRecord(domain, selectedGlueRecord!.subdomain);
                 await loadGlue();
                 setGlueMode('view');
                 setGlueReviewSnapshot(undefined);
