@@ -874,10 +874,10 @@ function DnsTab({
       setSelectedIndex(prev => Math.min(records.length - 1, prev + 1));
     } else if (input === 'c' && onCreate) {
       onCreate();
-    } else if (input === 'e' && onEdit && records[selectedIndex]) {
-      onEdit(records[selectedIndex]);
-    } else if (input === 'd' && onDelete && records[selectedIndex]) {
-      onDelete(records[selectedIndex]);
+    } else if (input === 'e' && onEdit && records.at(selectedIndex)) {
+      onEdit(records.at(selectedIndex)!);
+    } else if (input === 'd' && onDelete && records.at(selectedIndex)) {
+      onDelete(records.at(selectedIndex)!);
     }
   });
 
