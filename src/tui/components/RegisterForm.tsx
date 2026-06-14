@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
-import type { NormalizedDomain } from '../types.js';
 import type { TuiApiService } from '../services/api.js';
+import type { Theme } from '../theme.js';
 import { priceStringToCents } from '../forms/validators.js';
 
 export interface RegisterFormProps {
-  theme: any;
+  theme: Theme;
   service: TuiApiService;
   onRegister: (domain: string, cost: number) => Promise<void>;
   onCancel: () => void;
@@ -39,7 +39,11 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
     try {
       const result = await service.checkDomain(domain);
       if (result.status === 'loaded' && result.data) {
-        const response = result.data.response as any;
+        const response = result.data.response as {
+          avail?: string;
+          price?: string;
+          reason?: string;
+        };
         // Porkbun returns availability as `avail` ('yes'/'no') and the
         // registration price as a top-level `price` string. Renewal and
         // transfer prices are not in the checkDomain response; look them

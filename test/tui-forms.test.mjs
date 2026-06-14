@@ -73,12 +73,12 @@ describe('TUI Form Validators', () => {
 
   describe('validateGlueForm', () => {
     it('validates IP addresses', () => {
-      const errors = validateGlueForm({ subdomain: 'ns1', ips: ['invalid'] }, 'example.com');
+      const errors = validateGlueForm({ subdomain: 'ns1', ips: ['invalid'] });
       assert.ok(errors.get('ip_0'));
     });
 
     it('accepts valid IPs', () => {
-      const errors = validateGlueForm({ subdomain: 'ns1', ips: ['192.168.1.1', '2001:db8::1'] }, 'example.com');
+      const errors = validateGlueForm({ subdomain: 'ns1', ips: ['192.168.1.1', '2001:db8::1'] });
       assert.strictEqual(errors.size, 0);
     });
   });

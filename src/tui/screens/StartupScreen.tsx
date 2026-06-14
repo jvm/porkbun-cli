@@ -18,7 +18,7 @@ interface StartupScreenProps {
 
 type StartupPhase = 'profile-picker' | 'validating' | 'error';
 
-export function StartupScreen({ service, theme, onSuccess, credentialSource, profileName }: StartupScreenProps) {
+export function StartupScreen({ service, theme, onSuccess, credentialSource }: StartupScreenProps) {
   const [phase, setPhase] = useState<StartupPhase>(credentialSource ? 'validating' : 'profile-picker');
   const [profiles, setProfiles] = useState<string[]>([]);
   const [selectedProfile, setSelectedProfile] = useState(0);

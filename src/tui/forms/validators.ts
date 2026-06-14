@@ -159,7 +159,7 @@ export interface GlueRecordFormValues {
   ips: string[];
 }
 
-export function validateGlueForm(values: GlueRecordFormValues, parentDomain: string): FormErrors {
+export function validateGlueForm(values: GlueRecordFormValues): FormErrors {
   const errors: FormErrors = new Map();
 
   if (!values.subdomain) {
@@ -379,10 +379,6 @@ export function buildAutoRenewReview(
 }
 
 // --- Helpers ---
-
-function isValidIP(value: string): boolean {
-  return isIP(value) !== 0;
-}
 
 function isValidIPv4(value: string): boolean {
   return isIP(value) === 4;

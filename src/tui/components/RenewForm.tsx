@@ -3,10 +3,11 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { NormalizedDomain } from '../types.js';
 import type { TuiApiService } from '../services/api.js';
+import type { Theme } from '../theme.js';
 import { priceStringToCents } from '../forms/validators.js';
 
 export interface RenewFormProps {
-  theme: any;
+  theme: Theme;
   service: TuiApiService;
   domain: NormalizedDomain;
   balanceCents?: number;

@@ -24,7 +24,7 @@ export class TuiApiService {
 
   // --- Auth ---
 
-  async ping(signal?: AbortSignal): Promise<ResourceState<{ yourIp: string; credentialsValid: boolean }>> {
+  async ping(): Promise<ResourceState<{ yourIp: string; credentialsValid: boolean }>> {
     try {
       const data = await this.client.request(requireOperation('pingGet'));
       const record = asRecord(data);
@@ -43,7 +43,7 @@ export class TuiApiService {
 
   // --- Domains ---
 
-  async getDomains(query: DomainQuery = {}, signal?: AbortSignal): Promise<ResourceState<{ domains: NormalizedDomain[]; count: number }>> {
+  async getDomains(query: DomainQuery = {}): Promise<ResourceState<{ domains: NormalizedDomain[]; count: number }>> {
     try {
       const data = await this.client.request(requireOperation('getDomains'), {
         query: {

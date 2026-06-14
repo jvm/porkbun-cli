@@ -11,7 +11,7 @@ interface LoadingStateProps {
   theme: Theme;
 }
 
-export function LoadingState({ message, theme }: LoadingStateProps) {
+export function LoadingState({ message }: LoadingStateProps) {
   return (
     <Box padding={1}>
       <Spinner type="dots" />
@@ -26,7 +26,7 @@ interface EmptyStateProps {
   theme: Theme;
 }
 
-export function EmptyState({ message, details, theme }: EmptyStateProps) {
+export function EmptyState({ message, details }: EmptyStateProps) {
   return (
     <Box flexDirection="column" padding={1}>
       <Text dimColor>{message}</Text>

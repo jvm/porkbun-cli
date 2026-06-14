@@ -21,7 +21,7 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
   const [exportPath, setExportPath] = useState('');
   const [overwrite, setOverwrite] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
+  const [, setExporting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
   const doExport = async () => {

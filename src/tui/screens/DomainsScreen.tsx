@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Theme } from '../theme.js';
 import type { TuiApiService } from '../services/api.js';
-import type { NormalizedDomain, ReviewSnapshot, ConfirmationLevel } from '../types.js';
+import type { NormalizedDomain, ReviewSnapshot } from '../types.js';
 import { VirtualList } from '../components/VirtualList.js';
 import { LoadingState, ErrorState, EmptyState, StaleBanner } from '../components/StatusComponents.js';
 import { MutationConfirm } from '../components/MutationConfirm.js';
@@ -19,6 +19,7 @@ interface DomainsScreenProps {
   onOpenTransfers: () => void;
   onOpenRegister: () => void;
   onOpenAccount: () => void;
+  // onOpenHelp reserved for a future "?" shortcut in the command palette
   onOpenHelp: () => void;
   balanceCents?: number;
 }
@@ -28,6 +29,9 @@ type SearchPhase = 'inactive' | 'active';
 const FRESHNESS_WINDOW_MS = 30_000;
 
 export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, onOpenRegister, onOpenAccount, onOpenHelp, balanceCents }: DomainsScreenProps) {
+  // onOpenHelp is part of the public prop contract for a future
+  // command palette binding; the screen body doesn't invoke it yet.
+  void onOpenHelp;
   const [domains, setDomains] = useState<NormalizedDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | undefined>();

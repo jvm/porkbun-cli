@@ -11,7 +11,7 @@ interface VirtualListProps<T> {
   selectedIndex: number;
   renderItem: (item: T, index: number, isSelected: boolean) => React.ReactNode;
   maxVisible?: number;
-  theme: Theme;
+  theme?: Theme;
 }
 
 const MAX_VISIBLE_ROWS = 100;
@@ -22,7 +22,6 @@ export function VirtualList<T>({
   selectedIndex,
   renderItem,
   maxVisible = DEFAULT_VISIBLE_ROWS,
-  theme,
 }: VirtualListProps<T>) {
   const visibleCount = Math.min(maxVisible, MAX_VISIBLE_ROWS);
 

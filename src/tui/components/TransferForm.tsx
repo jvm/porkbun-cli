@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { TuiApiService } from '../services/api.js';
+import type { Theme } from '../theme.js';
 import { priceStringToCents } from '../forms/validators.js';
 
 export interface TransferFormProps {
-  theme: any;
+  theme: Theme;
   service: TuiApiService;
   balanceCents?: number;
   onTransfer: (domain: string, cost: number, authCode: string) => Promise<void>;

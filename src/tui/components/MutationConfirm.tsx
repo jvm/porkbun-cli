@@ -28,7 +28,7 @@ export function MutationConfirm({
   submitting = false,
 }: MutationConfirmProps) {
   const [confirmInput, setConfirmInput] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   const requiresTextConfirmation =
     confirmationLevel === 'billable' ||
