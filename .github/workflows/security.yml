@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths: ["src/**", "package.json", "pnpm-lock.yaml", ".github/workflows/**"]
   schedule:
     - cron: "37 4 * * 2"
   workflow_dispatch:
@@ -35,7 +34,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - name: Create temporary package-lock for npm audit
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund --legacy-peer-deps
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
@@ -60,7 +59,7 @@ jobs:
             "https://github.com/betterleaks/betterleaks/releases/download/v${BETTERLEAKS_VERSION}/betterleaks_${BETTERLEAKS_VERSION}_linux_x64.tar.gz" \
             -o /tmp/betterleaks.tar.gz
           tar -xzf /tmp/betterleaks.tar.gz -C /tmp betterleaks
-          install -m 0755 /tmp/betterleaks /usr/local/bin/betterleaks
+          sudo install -m 0755 /tmp/betterleaks /usr/local/bin/betterleaks
           betterleaks --version
       - name: Run betterleaks (working tree)
         run: |

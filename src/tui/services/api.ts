@@ -690,7 +690,7 @@ function normalizeForward(raw: Record<string, unknown>): NormalizedForward {
 
 function normalizeDnssecResponse(record: Record<string, unknown>): NormalizedDnssecRecord[] {
   const records = record.records;
-  if (!records) return [];
+  if (records === undefined || records === null) return [];
 
   // May be an object keyed by key tag or an array
   if (Array.isArray(records)) {

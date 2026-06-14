@@ -225,12 +225,10 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
       setRenewMode("form");
     } else if (key.leftArrow || char === "h") {
       const idx = TABS.indexOf(activeTab);
-      const prevTab = TABS.at(idx - 1);
-      if (prevTab) setActiveTab(prevTab);
+      if (idx > 0) setActiveTab(TABS.at(idx - 1)!);
     } else if (key.rightArrow || char === "l") {
       const idx = TABS.indexOf(activeTab);
-      const nextTab = TABS.at(idx + 1);
-      if (nextTab) setActiveTab(nextTab);
+      if (idx < TABS.length - 1) setActiveTab(TABS.at(idx + 1)!);
     }
   });
 
