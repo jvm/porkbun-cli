@@ -45,3 +45,52 @@ jobs:
 
       - name: Verify package contents
         run: npm pack --dry-run
+
+  # Runs on every PR and push to main. Fails the build if a known
+  # vulnerability at high severity or above sneaks into package-lock.json.
+  # --audit-level=high keeps noise down while still catching anything
+  # that should block a release.
+  audit:
+    name: Dependency audit (npm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Verify package signatures
+        run: npm audit signatures
+
+  # Scans the working tree for accidentally-committed secrets
+  # (API keys, tokens, private keys, .env files). Uses the official
+  # gitleaks-action with the default rule set; runs on PRs to main
+  # and on every push.
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@9f8b7259e8728b2efeb3eb46d3c57b3e84e9b367 # v2.3.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
