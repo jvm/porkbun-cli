@@ -444,31 +444,32 @@ function DomainRow({ domain, isSelected, isMultiSelected, theme }: DomainRowProp
   const attention = getAttentionIndicator(domain, theme);
   const relativeExpiry = domain.expireDate ? getRelativeExpiry(domain.expireDate) : '';
 
+  const selColor = isSelected ? theme.colors.selected : undefined;
+  const selBg = isSelected ? theme.colors.selectedBg : undefined;
+
   return (
     <Box>
-      <Text
-        backgroundColor={isSelected ? theme.colors.selectedBg : undefined}
-        color={isSelected ? theme.colors.selected : undefined}
-      >
+      <Text backgroundColor={selBg} color={selColor}>
         {isSelected ? theme.icons.selected : theme.icons.unselected}
         {isMultiSelected ? theme.icons.check : ' '}
         {' '}
       </Text>
-      <Text
-        backgroundColor={isSelected ? theme.colors.selectedBg : undefined}
-        color={isSelected ? theme.colors.selected : undefined}
-      >
+      <Text backgroundColor={selBg} color={selColor}>
         {domain.domain.padEnd(35)}
       </Text>
-      <Text dimColor>{domain.expireDate?.split('T')[0] ?? ''}</Text>
-      <Text dimColor> ({relativeExpiry})</Text>
-      <Text color={domain.autoRenew ? theme.colors.success : theme.colors.danger}>
+      <Text backgroundColor={selBg} color={selColor}>
+        {domain.expireDate?.split('T')[0] ?? ''}
+      </Text>
+      <Text backgroundColor={selBg} color={selColor}>
+        {' '}({relativeExpiry})
+      </Text>
+      <Text backgroundColor={selBg} color={selColor}>
         {' '}AR:{domain.autoRenew ? theme.icons.check : theme.icons.cross}
       </Text>
-      <Text color={domain.apiAccess ? theme.colors.success : theme.colors.warning}>
+      <Text backgroundColor={selBg} color={selColor}>
         {' '}API:{domain.apiAccess ? theme.icons.check : theme.icons.cross}
       </Text>
-      {attention && <Text color={attention.color}> {attention.icon}</Text>}
+      {attention && <Text backgroundColor={selBg} color={selColor}> {attention.icon}</Text>}
     </Box>
   );
 }

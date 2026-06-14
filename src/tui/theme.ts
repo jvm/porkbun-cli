@@ -61,7 +61,7 @@ export function createTheme(caps: TerminalCapabilities): Theme {
       info: hasColor ? 'blue' : undefined,
       muted: hasColor ? undefined : undefined,
       selected: hasColor ? 'white' : undefined,
-      selectedBg: hasColor ? 'blue' : undefined,
+      selectedBg: hasColor ? 'cyan' : undefined,
     },
     icons: {
       selected: hasUnicode ? '▸' : '>',
