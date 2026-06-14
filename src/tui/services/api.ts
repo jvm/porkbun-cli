@@ -147,7 +147,7 @@ export class TuiApiService {
         pathParams: { domain },
       });
       const record = asRecord(data);
-      const ns = asArray(record.ns).map(String);
+      const ns = asStringArray(record.ns);
       return { status: 'loaded', data: ns, timestamp: Date.now() };
     } catch (error) {
       return errorState(error);
@@ -499,8 +499,8 @@ function normalizeGlueResponse(record: Record<string, unknown>): NormalizedGlueR
       if (Array.isArray(entry) && entry.length >= 2) {
         const hostname = String(entry[0] ?? '');
         const data = asRecord(entry[1] ?? {});
-        const ipv4 = asArray(data.v4 ?? data.ipv4).map(String);
-        const ipv6 = asArray(data.v6 ?? data.ipv6).map(String);
+        const ipv4 = asStringArray(data.v4 ?? data.ipv4);
+        const ipv6 = asStringArray(data.v6 ?? data.ipv6);
         return {
           hostname,
           subdomain: hostname,
@@ -606,6 +606,11 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function asArray(value: unknown): Array<Record<string, unknown>> {
   if (Array.isArray(value)) return value.filter(v => typeof v === 'object' && v !== null) as Array<Record<string, unknown>>;
+  return [];
+}
+
+function asStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String);
   return [];
 }
 
