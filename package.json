@@ -33,14 +33,27 @@
     "SKILL.md",
     "THIRD_PARTY_NOTICES.md"
   ],
-  "scripts": {
-    "build": "tsc -p tsconfig.json && mkdir -p dist/generated && cp src/generated/openapi.json dist/generated/openapi.json && chmod +x dist/cli.js",
-    "lint": "eslint src",
-    "test": "npm run build && npm run lint && node --test test/*.test.mjs",
-    "prepack": "npm run build"
-  },
   "engines": {
     "node": ">=24"
+  },
+  "packageManager": "pnpm@11.6.0",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && vitest run",
+    "test:watch": "pnpm build && vitest",
+    "build": "tsc",
+    "postbuild": "mkdir -p dist/generated && cp src/generated/openapi.json dist/generated/openapi.json && chmod +x dist/cli.js",
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "verify-pack": "npm pack --dry-run",
+    "validate": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm audit",
+    "security:secrets": "betterleaks dir . --no-banner --redact --exit-code=2",
+    "security:scripts": "command -v shellcheck >/dev/null && shellcheck $(find . -type f -name '*.sh' -not -path './node_modules/*' -not -path './.git/*') || echo 'shellcheck not installed; skipping'",
+    "security:workflows": "command -v actionlint >/dev/null && actionlint .github/workflows/*.yml || echo 'actionlint not installed; skipping'",
+    "security:local": "pnpm audit && pnpm security:secrets && pnpm security:scripts && pnpm security:workflows",
+    "prepack": "pnpm build"
   },
   "dependencies": {
     "commander": "^15.0.0",
@@ -51,14 +64,17 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.9.3",
     "@types/react": "^19.2.17",
-    "@typescript-eslint/parser": "^8.61.0",
-    "eslint": "^9.39.4",
-    "eslint-plugin-security": "^3.0.1",
+    "eslint": "^10.5.0",
+    "eslint-plugin-security": "^4.0.1",
+    "lefthook": "^2.1.9",
+    "prettier": "^3.8.4",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.61.0",
-    "undici": "^8.4.1"
+    "undici": "^8.4.1",
+    "vitest": "^4.1.8"
   },
   "publishConfig": {
     "access": "public"

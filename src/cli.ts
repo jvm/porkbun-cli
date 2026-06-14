@@ -1,11 +1,18 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
-import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { resolve } from "node:path";
+import { readFile } from "./lib/safe-io.js";
 import { createInterface } from "node:readline/promises";
 import { Command, CommanderError, InvalidArgumentError } from "commander";
 import { ApiClient } from "./lib/api-client.js";
-import { configFileMode, configPath, deleteProfile, listProfiles, resolveCredentials, saveProfile } from "./lib/config.js";
+import {
+  configFileMode,
+  configPath,
+  deleteProfile,
+  listProfiles,
+  resolveCredentials,
+  saveProfile,
+} from "./lib/config.js";
 import { CliError, errorEnvelope } from "./lib/errors.js";
 import { normalizeForOutput, render } from "./lib/output.js";
 import { buildCliSchema } from "./lib/schema.js";
@@ -14,7 +21,7 @@ import {
   CLI_COMMANDS,
   defaultInvocation,
   type CommandOptionDefinition,
-  type OperationInvocation
+  type OperationInvocation,
 } from "./commands/definitions.js";
 import { launchTui } from "./tui/index.js";
 
@@ -25,7 +32,10 @@ export async function run(argv = process.argv): Promise<void> {
   try {
     await program.parseAsync(argv);
   } catch (error) {
-    if (error instanceof CommanderError && (error.code === "commander.helpDisplayed" || error.code === "commander.version")) {
+    if (
+      error instanceof CommanderError &&
+      (error.code === "commander.helpDisplayed" || error.code === "commander.version")
+    ) {
       return;
     }
     const normalized =
@@ -41,7 +51,9 @@ export function buildProgram(): Command {
   const program = new Command();
   program
     .name("porkbun")
-    .description("Agent-friendly CLI for the Porkbun API v3. Bare interactive invocation launches the TUI.")
+    .description(
+      "Agent-friendly CLI for the Porkbun API v3. Bare interactive invocation launches the TUI.",
+    )
     .version(VERSION)
     .showHelpAfterError(false)
     .exitOverride()
@@ -62,11 +74,22 @@ function addGlobalOptions(program: Command): void {
   program
     .option("-o, --output <format>", "Output format: table, json, ndjson, yaml, or auto.", "auto")
     .option("--fields <fields>", "Comma-separated fields to include in structured output.")
-    .option("--limit <n>", "Maximum list items to emit. Defaults to 100 for list commands.", parseInteger)
-    .option("--offset <n>", "Client-side list offset. Also maps to API start where supported.", parseInteger)
+    .option(
+      "--limit <n>",
+      "Maximum list items to emit. Defaults to 100 for list commands.",
+      parseInteger,
+    )
+    .option(
+      "--offset <n>",
+      "Client-side list offset. Also maps to API start where supported.",
+      parseInteger,
+    )
     .option("--profile <profile>", "Saved profile name to use.")
     .option("--api-key <key>", "Porkbun API key. Prefer PORKBUN_API_KEY for agents.")
-    .option("--secret-api-key <key>", "Porkbun secret API key. Prefer PORKBUN_SECRET_API_KEY for agents.")
+    .option(
+      "--secret-api-key <key>",
+      "Porkbun secret API key. Prefer PORKBUN_SECRET_API_KEY for agents.",
+    )
     .option("--base-url <url>", "Override Porkbun API base URL.")
     .option("--ipv4", "Use the Porkbun IPv4-only API endpoint.")
     .option("--timeout <ms>", "Request timeout in milliseconds.", parseInteger, 30_000)
@@ -75,7 +98,10 @@ function addGlobalOptions(program: Command): void {
     .option("--idempotency-key <key>", "Explicit idempotency key for mutating POST requests.")
     .option("--fresh-idempotency-key", "Generate a fresh idempotency key for this mutation.")
     .option("--verbose", "Write request diagnostics to stderr.")
-    .option("--no-color", "Disable color output. Reserved for compatibility; output is colorless by default.");
+    .option(
+      "--no-color",
+      "Disable color output. Reserved for compatibility; output is colorless by default.",
+    );
 }
 
 function registerOperationCommands(program: Command): void {
@@ -94,25 +120,23 @@ function registerOperationCommands(program: Command): void {
       const localOptions = commanderCommand.opts<Record<string, unknown>>();
       Object.defineProperty(localOptions, "__meta", {
         value: definition.options ?? [],
-        enumerable: false
+        enumerable: false,
       });
       const args = Object.fromEntries(
-        new Map(
-          (definition.args ?? []).map((arg, index) => [arg.name, positionals.at(index)])
-        )
+        new Map((definition.args ?? []).map((arg, index) => [arg.name, positionals.at(index)])),
       );
       const invocation = definition.build
         ? await definition.build({
             args,
             options: localOptions,
             globalOptions: program.opts(),
-            readStdin
+            readStdin,
           })
         : defaultInvocation(definition, {
             args,
             options: localOptions,
             globalOptions: program.opts(),
-            readStdin
+            readStdin,
           });
       await executeInvocation(program, invocation);
     });
@@ -132,7 +156,11 @@ function registerAuthCommands(program: Command): void {
     .action(async (options: Record<string, string | undefined>) => {
       const global = program.opts<Record<string, unknown>>();
       const profile = options.profile ?? stringOption(global.profile) ?? "default";
-      const apiKey = options.apiKey ?? stringOption(global.apiKey) ?? process.env.PORKBUN_API_KEY ?? (await promptIfTty("API key: "));
+      const apiKey =
+        options.apiKey ??
+        stringOption(global.apiKey) ??
+        process.env.PORKBUN_API_KEY ??
+        (await promptIfTty("API key: "));
       const secretApiKey =
         options.secretApiKey ??
         stringOption(global.secretApiKey) ??
@@ -141,7 +169,8 @@ function registerAuthCommands(program: Command): void {
       if (!apiKey || !secretApiKey) {
         throw new CliError({
           kind: "auth",
-          message: "auth login requires --api-key/--secret-api-key, env credentials, or an interactive TTY."
+          message:
+            "auth login requires --api-key/--secret-api-key, env credentials, or an interactive TTY.",
         });
       }
       await saveProfile(profile, apiKey, secretApiKey);
@@ -149,7 +178,7 @@ function registerAuthCommands(program: Command): void {
         status: "SUCCESS",
         profile,
         configPath: configPath(),
-        mode: await configFileMode()
+        mode: await configFileMode(),
       });
     });
 
@@ -173,7 +202,7 @@ function registerAuthCommands(program: Command): void {
         items: profiles,
         total: profiles.length,
         limit: profiles.length,
-        offset: 0
+        offset: 0,
       });
     });
 
@@ -186,9 +215,9 @@ function registerAuthCommands(program: Command): void {
         {
           apiKey: stringOption(global.apiKey),
           secretApiKey: stringOption(global.secretApiKey),
-          profile: stringOption(global.profile)
+          profile: stringOption(global.profile),
         },
-        true
+        true,
       );
       const client = makeClient(global);
       const ping = await client.request(requireOperation("pingGet"));
@@ -196,7 +225,7 @@ function registerAuthCommands(program: Command): void {
         status: "SUCCESS",
         source: credentials?.source,
         profile: credentials?.profile,
-        ping
+        ping,
       });
     });
 
@@ -217,8 +246,18 @@ function registerApiCommands(program: Command): void {
     .command("call")
     .description("Call a Porkbun OpenAPI operation by operationId.")
     .argument("<operationId>", "Porkbun OpenAPI operationId.")
-    .option("--param <key=value>", "Path parameter. Repeat for multiple parameters.", collectPair, [])
-    .option("--query <key=value>", "Query parameter. Repeat for multiple parameters.", collectPair, [])
+    .option(
+      "--param <key=value>",
+      "Path parameter. Repeat for multiple parameters.",
+      collectPair,
+      [],
+    )
+    .option(
+      "--query <key=value>",
+      "Query parameter. Repeat for multiple parameters.",
+      collectPair,
+      [],
+    )
     .option("--body <json>", "JSON request body.")
     .option("--body-file <path>", "Read JSON request body from a file.")
     .action(async (operationId: string, options: Record<string, unknown>) => {
@@ -226,7 +265,7 @@ function registerApiCommands(program: Command): void {
       if (!operation) {
         throw new CliError({
           kind: "usage",
-          message: `Unknown operationId '${operationId}'. Run porkbun schema or porkbun api spec to inspect valid operations.`
+          message: `Unknown operationId '${operationId}'. Run porkbun schema or porkbun api spec to inspect valid operations.`,
         });
       }
       const body = await parseBodyOptions(options);
@@ -235,7 +274,7 @@ function registerApiCommands(program: Command): void {
         pathParams: pairsToObject(options.param),
         query: pairsToObject(options.query),
         body,
-        listKey: operation.listKey
+        listKey: operation.listKey,
       });
     });
 
@@ -261,7 +300,8 @@ function registerTuiCommand(program: Command): void {
       if (!process.stdin.isTTY || !process.stdout.isTTY) {
         throw new CliError({
           kind: "usage",
-          message: "porkbun tui requires an interactive terminal (TTY). Use named commands for non-interactive usage."
+          message:
+            "porkbun tui requires an interactive terminal (TTY). Use named commands for non-interactive usage.",
         });
       }
       await launchTui({
@@ -272,7 +312,7 @@ function registerTuiCommand(program: Command): void {
         ipv4: Boolean(global.ipv4),
         timeout: numberOption(global.timeout),
         verbose: Boolean(global.verbose),
-        noColor: Boolean(global.color) === false
+        noColor: Boolean(global.color) === false,
       });
     });
 
@@ -293,7 +333,7 @@ function registerRootAction(program: Command): void {
         ipv4: Boolean(global.ipv4),
         timeout: numberOption(global.timeout),
         verbose: Boolean(global.verbose),
-        noColor: Boolean(global.color) === false
+        noColor: Boolean(global.color) === false,
       });
     } else {
       // Non-TTY: print concise help, exit successfully
@@ -302,7 +342,16 @@ function registerRootAction(program: Command): void {
   });
 }
 
-const TUI_INCOMPATIBLE_OPTIONS = ["output", "fields", "limit", "offset", "dryRun", "yes", "idempotencyKey", "freshIdempotencyKey"] as const;
+const TUI_INCOMPATIBLE_OPTIONS = [
+  "output",
+  "fields",
+  "limit",
+  "offset",
+  "dryRun",
+  "yes",
+  "idempotencyKey",
+  "freshIdempotencyKey",
+] as const;
 
 function rejectTuiIncompatibleOptions(global: Record<string, unknown>): void {
   // Build a Map once so the per-key reads below aren't flagged as
@@ -317,14 +366,14 @@ function rejectTuiIncompatibleOptions(global: Record<string, unknown>): void {
       if (key === "output" && value === "auto") continue;
       throw new CliError({
         kind: "usage",
-        message: `Option --${camelToKebab(key)} is not compatible with the interactive TUI.`
+        message: `Option --${camelToKebab(key)} is not compatible with the interactive TUI.`,
       });
     }
   }
 }
 
 function camelToKebab(str: string): string {
-  return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+  return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 }
 
 async function executeInvocation(program: Command, invocation: OperationInvocation): Promise<void> {
@@ -338,13 +387,13 @@ async function executeInvocation(program: Command, invocation: OperationInvocati
     body: invocation.body,
     dryRun: Boolean(global.dryRun),
     idempotencyKey: stringOption(global.idempotencyKey),
-    freshIdempotencyKey: Boolean(global.freshIdempotencyKey)
+    freshIdempotencyKey: Boolean(global.freshIdempotencyKey),
   });
   const data = normalizeForOutput(raw, {
     listKey: invocation.listKey ?? operation.listKey,
     fields: stringOption(global.fields),
     limit: numberOption(global.limit),
-    offset: numberOption(global.offset)
+    offset: numberOption(global.offset),
   });
   writeData(program, data, false);
 }
@@ -357,7 +406,7 @@ function makeClient(global: Record<string, unknown>): ApiClient {
     baseUrl: stringOption(global.baseUrl),
     ipv4: Boolean(global.ipv4),
     timeoutMs: numberOption(global.timeout),
-    verbose: Boolean(global.verbose)
+    verbose: Boolean(global.verbose),
   });
 }
 
@@ -367,20 +416,26 @@ function writeData(program: Command, data: unknown, applyFields = true): void {
     render(data, {
       output: stringOption(global.output),
       fields: applyFields ? stringOption(global.fields) : undefined,
-      stdoutIsTty: Boolean(process.stdout.isTTY)
-    })
+      stdoutIsTty: Boolean(process.stdout.isTTY),
+    }),
   );
 }
 
-async function confirmMutation(operation: OperationDefinition, global: Record<string, unknown>): Promise<void> {
+async function confirmMutation(
+  operation: OperationDefinition,
+  global: Record<string, unknown>,
+): Promise<void> {
   if (!operation.mutating || global.dryRun || global.yes) return;
   if (!process.stdin.isTTY) {
     throw new CliError({
       kind: "usage",
-      message: "Mutating commands require --yes in non-TTY contexts. Use --dry-run to preview the request."
+      message:
+        "Mutating commands require --yes in non-TTY contexts. Use --dry-run to preview the request.",
     });
   }
-  const answer = await promptIfTty(`Proceed with mutating operation ${operation.operationId}? Type yes: `);
+  const answer = await promptIfTty(
+    `Proceed with mutating operation ${operation.operationId}? Type yes: `,
+  );
   if (answer !== "yes") {
     throw new CliError({ kind: "usage", message: "Mutation cancelled." });
   }
@@ -414,7 +469,11 @@ function addCommandOption(command: Command, option: CommandOptionDefinition): vo
     const defaultValue = option.defaultValue ?? (option.repeat ? [] : undefined);
     command.option(option.flags, option.description, parser, defaultValue);
   } else {
-    command.option(option.flags, option.description, option.defaultValue as string | boolean | string[] | undefined);
+    command.option(
+      option.flags,
+      option.description,
+      option.defaultValue as string | boolean | string[] | undefined,
+    );
   }
 }
 
@@ -440,7 +499,13 @@ function parseInteger(value: string): number {
 }
 
 function collectStringArray(value: string, previous: string[] = []): string[] {
-  return [...previous, ...value.split(",").map((entry) => entry.trim()).filter(Boolean)];
+  return [
+    ...previous,
+    ...value
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean),
+  ];
 }
 
 function collectPair(value: string, previous: string[] = []): string[] {
@@ -458,20 +523,24 @@ function parseJsonOption(value: string): unknown {
   }
 }
 
-async function parseBodyOptions(options: Record<string, unknown>): Promise<Record<string, unknown>> {
+async function parseBodyOptions(
+  options: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
   const bodyText = options.bodyFile
-    // Path comes from the --body-file CLI flag. The CLI rejects unknown
-    // flags at parse time, so the value is operator-supplied and not
-    // attacker-controlled; we don't traverse to system dirs by design.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    ? await readFile(String(options.bodyFile), "utf8")
+    ? // Path comes from the --body-file CLI flag. The CLI rejects unknown
+      // flags at parse time, so the value is operator-supplied and not
+      // attacker-controlled; we don't traverse to system dirs by design.
+      await readFile(String(options.bodyFile), "utf8")
     : typeof options.body === "string"
       ? options.body
       : undefined;
   if (!bodyText) return {};
   const parsed = parseJsonOption(bodyText);
   if (!isRecord(parsed)) {
-    throw new CliError({ kind: "usage", message: "--body and --body-file must contain a JSON object." });
+    throw new CliError({
+      kind: "usage",
+      message: "--body and --body-file must contain a JSON object.",
+    });
   }
   return parsed;
 }
@@ -529,13 +598,7 @@ async function promptIfTty(prompt: string): Promise<string | undefined> {
 
 async function readBundledSpec(): Promise<unknown> {
   const specPath = new URL("./generated/openapi.json", import.meta.url);
-  return JSON.parse(
-    // specPath is a file: URL built from import.meta.url, i.e. relative
-    // to the script. Not user-controlled; the path resolves inside the
-    // package's own dist/ tree.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    await readFile(specPath, "utf8")
-  );
+  return JSON.parse(await readFile(specPath, "utf8"));
 }
 
 function stringOption(value: unknown): string | undefined {
@@ -551,12 +614,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 // process.argv[1] is the path the user (or their shell launcher) used
-// to invoke the CLI. realpathSync resolves symlinks so the entry-guard
-// works correctly under `npm link`. Not user-traversable: the value
-// is compared for equality with import.meta.url, not used to read or
-// write any other file.
-// eslint-disable-next-line security/detect-non-literal-fs-filename
-const entryPath = process.argv[1] ? pathToFileURL(realpathSync(process.argv[1])).href : "";
+// to invoke the CLI. We resolve it for the entry-guard so `npm link`
+// behaves predictably, but the value is only compared with import.meta.url.
+const entryPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : "";
 if (import.meta.url === entryPath) {
   await run();
 }

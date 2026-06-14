@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
-import type { TuiApiService } from '../services/api.js';
-import type { Theme } from '../theme.js';
-import { priceStringToCents } from '../forms/validators.js';
+import React, { useState } from "react";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
+import TextInput from "ink-text-input";
+import type { TuiApiService } from "../services/api.js";
+import type { Theme } from "../theme.js";
+import { priceStringToCents } from "../forms/validators.js";
 
 export interface RegisterFormProps {
   theme: Theme;
@@ -14,21 +15,21 @@ export interface RegisterFormProps {
 
 interface AvailabilityResult {
   available: boolean;
-  cost?: number;
-  reason?: string;
+  cost?: number | undefined;
+  reason?: string | undefined;
 }
 
 export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterFormProps) {
-  const [domain, setDomain] = useState('');
+  const [domain, setDomain] = useState("");
   const [checking, setChecking] = useState(false);
   const [availability, setAvailability] = useState<AvailabilityResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [readyToSubmit, setReadyToSubmit] = useState(false);
-  const [confirmationText, setConfirmationText] = useState('');
+  const [confirmationText, setConfirmationText] = useState("");
 
   const checkAvailability = async () => {
-    if (!domain || !domain.includes('.')) {
-      setError('Please enter a valid domain name (e.g., example.com)');
+    if (!domain || !domain.includes(".")) {
+      setError("Please enter a valid domain name (e.g., example.com)");
       return;
     }
 
@@ -38,7 +39,7 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
 
     try {
       const result = await service.checkDomain(domain);
-      if (result.status === 'loaded' && result.data) {
+      if (result.status === "loaded" && result.data) {
         const response = result.data.response as {
           avail?: string;
           price?: string;
@@ -48,7 +49,7 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
         // registration price as a top-level `price` string. Renewal and
         // transfer prices are not in the checkDomain response; look them
         // up from the pricing endpoint when needed.
-        const available = response?.avail === 'yes';
+        const available = response?.avail === "yes";
         const priceStr: string | undefined = response?.price;
 
         let costCents: number | undefined;
@@ -58,9 +59,9 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
         }
 
         if (costCents === undefined) {
-          const tld = domain.split('.').slice(-1)[0];
+          const tld = domain.split(".").slice(-1)[0];
           if (tld) {
-            const tldPrice = await service.getTldPrice(tld, 'registration');
+            const tldPrice = await service.getTldPrice(tld, "registration");
             if (tldPrice) {
               const parsed = priceStringToCents(tldPrice);
               if (parsed !== undefined) costCents = parsed;
@@ -71,7 +72,7 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
         setAvailability({
           available,
           cost: costCents,
-          reason: !available ? response?.reason || 'Domain not available' : undefined,
+          reason: !available ? response?.reason || "Domain not available" : undefined,
         });
 
         if (available && costCents !== undefined) {
@@ -140,7 +141,9 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
   // Confirmation screen
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color={theme.colors.danger}>⚠ Billable Operation: Register Domain</Text>
+      <Text bold color={theme.colors.danger}>
+        ⚠ Billable Operation: Register Domain
+      </Text>
       <Box marginTop={1} flexDirection="column">
         <Box>
           <Text>Domain: </Text>
@@ -148,7 +151,9 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
         </Box>
         <Box>
           <Text>Cost: </Text>
-          <Text bold color={theme.colors.danger}>${availability?.cost ? (availability.cost / 100).toFixed(2) : '?'}</Text>
+          <Text bold color={theme.colors.danger}>
+            ${availability?.cost ? (availability.cost / 100).toFixed(2) : "?"}
+          </Text>
           <Text dimColor> (charged to account balance)</Text>
         </Box>
         <Box marginTop={1} flexDirection="column">
@@ -158,7 +163,9 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
           <Text>• Be irreversible after completion</Text>
         </Box>
         <Box marginTop={1} flexDirection="column">
-          <Text bold color={theme.colors.warning}>To confirm, type the domain name exactly:</Text>
+          <Text bold color={theme.colors.warning}>
+            To confirm, type the domain name exactly:
+          </Text>
           <Box>
             <Text>Type: </Text>
             <TextInput value={confirmationText} onChange={setConfirmationText} />

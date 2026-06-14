@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import type { NormalizedForward } from '../types.js';
-import type { Theme } from '../theme.js';
+import React, { useState } from "react";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
+import type { NormalizedForward } from "../types.js";
+import type { Theme } from "../theme.js";
 
 export interface ForwardsTabProps {
   forwards: NormalizedForward[];
@@ -14,12 +15,12 @@ export function ForwardsTab({ forwards, theme, onCreate, onDelete }: ForwardsTab
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useInput((input, key) => {
-    if (input === 'n') {
+    if (input === "n") {
       onCreate();
       return;
     }
 
-    if (input === 'd' && forwards.at(selectedIndex)) {
+    if (input === "d" && forwards.at(selectedIndex)) {
       onDelete(forwards.at(selectedIndex)!);
       return;
     }
@@ -47,8 +48,8 @@ export function ForwardsTab({ forwards, theme, onCreate, onDelete }: ForwardsTab
         {forwards.map((forward, idx) => (
           <Box key={forward.id}>
             <Text color={idx === selectedIndex ? theme.colors.primary : undefined}>
-              {idx === selectedIndex ? '▶ ' : '  '}
-              {forward.subdomain || '(root)'} → {forward.location} ({forward.type})
+              {idx === selectedIndex ? "▶ " : "  "}
+              {forward.subdomain || "(root)"} → {forward.location} ({forward.type})
             </Text>
           </Box>
         ))}

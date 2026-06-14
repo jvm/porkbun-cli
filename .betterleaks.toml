@@ -1,0 +1,18 @@
+# betterleaks config (gitleaks-compatible).
+#
+# The Porkbun OpenAPI spec contains many parameter names that look
+# like generic API-key patterns to the default ruleset. Both copies
+# of the spec (src/generated/, dist/generated/) are bundled/generated
+# content and never contain real secrets, so skip them.
+#
+# Also skip build artifacts, dependency trees, and the VCS directory.
+
+[allowlist]
+paths = [
+  '''src/generated/.*''',
+  '''dist/generated/.*''',
+  '''node_modules/.*''',
+  '''\.git/.*''',
+  '''dist/.*''',
+  '''\.pnpm/.*''',
+]

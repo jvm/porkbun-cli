@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import type { NormalizedTransfer } from '../types.js';
-import type { TuiApiService } from '../services/api.js';
-import type { Theme } from '../theme.js';
+import React, { useState } from "react";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
+import type { NormalizedTransfer } from "../types.js";
+import type { TuiApiService } from "../services/api.js";
+import type { Theme } from "../theme.js";
 
 export interface TransferTabProps {
   domain: string;
@@ -29,8 +30,8 @@ export function TransferTab({ domain, service, theme }: TransferTabProps) {
           orderId?: unknown;
         };
         setTransfer({
-          domain: String(data.domain || ''),
-          status: String(data.status || ''),
+          domain: String(data.domain || ""),
+          status: String(data.status || ""),
           statusDescription: data.statusDescription ? String(data.statusDescription) : undefined,
           transferDate: data.transferDate ? String(data.transferDate) : undefined,
           orderId: data.orderId ? String(data.orderId) : undefined,
@@ -47,7 +48,7 @@ export function TransferTab({ domain, service, theme }: TransferTabProps) {
   };
 
   useInput((input) => {
-    if (input === 'r') {
+    if (input === "r") {
       loadTransfer();
     }
   });
@@ -84,7 +85,7 @@ export function TransferTab({ domain, service, theme }: TransferTabProps) {
       <Box marginTop={1} flexDirection="column">
         <Text>Domain: {transfer.domain}</Text>
         <Text>Status: {transfer.status}</Text>
-        <Text>Description: {transfer.statusDescription || '(none)'}</Text>
+        <Text>Description: {transfer.statusDescription || "(none)"}</Text>
         {transfer.transferDate && <Text>Transfer Date: {transfer.transferDate}</Text>}
         {transfer.orderId && <Text>Order ID: {transfer.orderId}</Text>}
       </Box>

@@ -1,6 +1,6 @@
-import { chmod, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { chmod, mkdir, readFile, rename, stat, writeFile } from "./safe-io.js";
 import { CliError } from "./errors.js";
 
 export interface Credentials {
@@ -18,15 +18,15 @@ export interface Profile {
 }
 
 export interface ConfigFile {
-  activeProfile?: string;
+  activeProfile?: string | undefined;
   profiles: Map<string, Profile>;
 }
 
 export interface CredentialInput {
-  apiKey?: string;
-  secretApiKey?: string;
-  profile?: string;
-  env?: NodeJS.ProcessEnv;
+  apiKey?: string | undefined;
+  secretApiKey?: string | undefined;
+  profile?: string | undefined;
+  env?: NodeJS.ProcessEnv | undefined;
 }
 
 const DEFAULT_PROFILE = "default";
@@ -42,7 +42,6 @@ export async function readConfig(): Promise<ConfigFile> {
   try {
     // Path comes from PORKBUN_CONFIG_FILE / XDG_CONFIG_HOME / ~/.config.
     // All three are operator-controlled environment, not attacker input.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
     const contents = await readFile(path, "utf8");
     return parseConfig(JSON.parse(contents));
   } catch (error) {
@@ -52,7 +51,7 @@ export async function readConfig(): Promise<ConfigFile> {
     throw new CliError({
       kind: "usage",
       message: `Failed to read config file at ${path}`,
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 }
@@ -62,7 +61,6 @@ export async function writeConfig(config: ConfigFile): Promise<void> {
   const directory = dirname(path);
   // The directory is derived from configPath() (operator-controlled env).
   // File modes 0700 / 0600 below are the security boundary.
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const tmpPath = `${path}.${process.pid}.tmp`;
   // JSON.stringify doesn't serialize Maps; convert at the persistence
@@ -71,13 +69,9 @@ export async function writeConfig(config: ConfigFile): Promise<void> {
     ...config,
     profiles: Object.fromEntries(config.profiles),
   };
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await writeFile(tmpPath, `${JSON.stringify(serialized, null, 2)}\n`, { mode: 0o600 });
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await chmod(tmpPath, 0o600);
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await rename(tmpPath, path);
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await chmod(path, 0o600);
 }
 
@@ -85,7 +79,7 @@ export async function saveProfile(
   profileName: string,
   apiKey: string,
   secretApiKey: string,
-  makeActive = true
+  makeActive = true,
 ): Promise<ConfigFile> {
   const name = validateProfileName(profileName || DEFAULT_PROFILE);
   const config = await readConfig();
@@ -95,7 +89,7 @@ export async function saveProfile(
     apiKey,
     secretApiKey,
     createdAt: existing?.createdAt ?? now,
-    updatedAt: now
+    updatedAt: now,
   });
   if (makeActive) config.activeProfile = name;
   await writeConfig(config);
@@ -107,24 +101,31 @@ export async function deleteProfile(profileName: string): Promise<ConfigFile> {
   const config = await readConfig();
   config.profiles.delete(name);
   if (config.activeProfile === name) {
-    config.activeProfile = config.profiles.keys().next().value;
+    const nextProfile = config.profiles.keys().next().value;
+    if (nextProfile) {
+      config.activeProfile = nextProfile;
+    } else {
+      delete config.activeProfile;
+    }
   }
   await writeConfig(config);
   return config;
 }
 
-export async function listProfiles(): Promise<Array<{ name: string; active: boolean; updatedAt: string }>> {
+export async function listProfiles(): Promise<
+  Array<{ name: string; active: boolean; updatedAt: string }>
+> {
   const config = await readConfig();
   return Array.from(config.profiles, ([name, profile]) => ({
     name,
     active: name === config.activeProfile,
-    updatedAt: profile.updatedAt
+    updatedAt: profile.updatedAt,
   }));
 }
 
 export async function resolveCredentials(
   input: CredentialInput,
-  required: boolean
+  required: boolean,
 ): Promise<Credentials | undefined> {
   const env = input.env ?? process.env;
 
@@ -132,13 +133,13 @@ export async function resolveCredentials(
     if (!input.apiKey || !input.secretApiKey) {
       throw new CliError({
         kind: "auth",
-        message: "Both --api-key and --secret-api-key are required when either is supplied."
+        message: "Both --api-key and --secret-api-key are required when either is supplied.",
       });
     }
     return {
       apiKey: input.apiKey,
       secretApiKey: input.secretApiKey,
-      source: "flags"
+      source: "flags",
     };
   }
 
@@ -148,13 +149,14 @@ export async function resolveCredentials(
     if (!envApiKey || !envSecretApiKey) {
       throw new CliError({
         kind: "auth",
-        message: "Both PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY are required when either is supplied."
+        message:
+          "Both PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY are required when either is supplied.",
       });
     }
     return {
       apiKey: envApiKey,
       secretApiKey: envSecretApiKey,
-      source: "env"
+      source: "env",
     };
   }
 
@@ -166,7 +168,7 @@ export async function resolveCredentials(
       apiKey: profile.apiKey,
       secretApiKey: profile.secretApiKey,
       source: "profile",
-      profile: profileName
+      profile: profileName,
     };
   }
 
@@ -175,14 +177,13 @@ export async function resolveCredentials(
   throw new CliError({
     kind: "auth",
     message:
-      "Porkbun credentials were not found. Set PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY, pass --api-key/--secret-api-key, or run porkbun auth login."
+      "Porkbun credentials were not found. Set PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY, pass --api-key/--secret-api-key, or run porkbun auth login.",
   });
 }
 
 export async function configFileMode(): Promise<string | undefined> {
   try {
     // Same operator-controlled env source as the read/write above.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
     const info = await stat(configPath());
     return `0${(info.mode & 0o777).toString(8)}`;
   } catch (error) {
@@ -208,8 +209,10 @@ function parseConfig(value: unknown): ConfigFile {
   }
 
   const activeProfile =
-    value.activeProfile === undefined ? undefined : validateProfileName(String(value.activeProfile));
-  return { activeProfile, profiles };
+    value.activeProfile === undefined
+      ? undefined
+      : validateProfileName(String(value.activeProfile));
+  return activeProfile !== undefined ? { activeProfile, profiles } : { profiles };
 }
 
 function validateProfileName(value: string): string {
@@ -221,7 +224,7 @@ function validateProfileName(value: string): string {
   ) {
     throw new CliError({
       kind: "usage",
-      message: "Profile names must be 1-64 letters, numbers, dots, underscores, or hyphens."
+      message: "Profile names must be 1-64 letters, numbers, dots, underscores, or hyphens.",
     });
   }
   return value;

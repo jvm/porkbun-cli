@@ -1,23 +1,30 @@
 /**
  * TransfersScreen - domain transfer initiation with pricing check and billable confirmation
  */
-import React, { useState, useCallback, useEffect } from 'react';
-import { Box, Text, useInput } from 'ink';
-import type { Theme } from '../theme.js';
-import type { TuiApiService } from '../services/api.js';
-import type { NormalizedTransfer } from '../types.js';
-import { TransferForm } from '../components/TransferForm.js';
-import { VirtualList } from '../components/VirtualList.js';
+import React, { useState, useCallback, useEffect } from "react";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
+import type { Theme } from "../theme.js";
+import type { TuiApiService } from "../services/api.js";
+import type { NormalizedTransfer } from "../types.js";
+import { TransferForm } from "../components/TransferForm.js";
+import { VirtualList } from "../components/VirtualList.js";
 
 interface TransfersScreenProps {
   service: TuiApiService;
   theme: Theme;
-  balanceCents?: number;
+  balanceCents?: number | undefined;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export function TransfersScreen({ service, theme, balanceCents, onSuccess, onCancel }: TransfersScreenProps) {
+export function TransfersScreen({
+  service,
+  theme,
+  balanceCents,
+  onSuccess,
+  onCancel,
+}: TransfersScreenProps) {
   const [transfers, setTransfers] = useState<NormalizedTransfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +35,10 @@ export function TransfersScreen({ service, theme, balanceCents, onSuccess, onCan
   const loadTransfers = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await service.listTransfers();
-      if (result.status === 'loaded' && result.data) {
+      if (result.status === "loaded" && result.data) {
         setTransfers(result.data);
       } else if (result.error) {
         setError(result.error.message);
@@ -47,42 +54,45 @@ export function TransfersScreen({ service, theme, balanceCents, onSuccess, onCan
     loadTransfers();
   }, [loadTransfers]);
 
-  const handleTransfer = useCallback(async (domain: string, cost: number, authCode: string) => {
-    setError(null);
-    setSuccess(null);
-    
-    try {
-      const result = await service.transferDomain(domain, cost, authCode);
-      
-      if (result.status === 'loaded') {
-        setSuccess(`Successfully initiated transfer for ${domain}!`);
-        setShowForm(false);
-        // Refresh transfers list
-        await loadTransfers();
-        setTimeout(() => {
-          onSuccess();
-        }, 2000);
-      } else if (result.error) {
-        setError(result.error.message);
+  const handleTransfer = useCallback(
+    async (domain: string, cost: number, authCode: string) => {
+      setError(null);
+      setSuccess(null);
+
+      try {
+        const result = await service.transferDomain(domain, cost, authCode);
+
+        if (result.status === "loaded") {
+          setSuccess(`Successfully initiated transfer for ${domain}!`);
+          setShowForm(false);
+          // Refresh transfers list
+          await loadTransfers();
+          setTimeout(() => {
+            onSuccess();
+          }, 2000);
+        } else if (result.error) {
+          setError(result.error.message);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }, [service, onSuccess, loadTransfers]);
+    },
+    [service, onSuccess, loadTransfers],
+  );
 
   useInput((char, key) => {
     if (showForm) return;
-    
-    if (key.escape || char === 'q') {
+
+    if (key.escape || char === "q") {
       onCancel();
-    } else if (char === 'n') {
+    } else if (char === "n") {
       setShowForm(true);
-    } else if (char === 'r') {
+    } else if (char === "r") {
       loadTransfers();
     } else if (key.upArrow && selectedIndex > 0) {
-      setSelectedIndex(prev => prev - 1);
+      setSelectedIndex((prev) => prev - 1);
     } else if (key.downArrow && selectedIndex < transfers.length - 1) {
-      setSelectedIndex(prev => prev + 1);
+      setSelectedIndex((prev) => prev + 1);
     }
   });
 
@@ -111,7 +121,9 @@ export function TransfersScreen({ service, theme, balanceCents, onSuccess, onCan
   return (
     <Box flexDirection="column" flexGrow={1}>
       <Box marginBottom={1}>
-        <Text bold color={theme.colors.primary}>Domain Transfers</Text>
+        <Text bold color={theme.colors.primary}>
+          Domain Transfers
+        </Text>
       </Box>
 
       {error && (
@@ -145,10 +157,10 @@ export function TransfersScreen({ service, theme, balanceCents, onSuccess, onCan
                   backgroundColor={isSelected ? theme.colors.selectedBg : undefined}
                   color={isSelected ? theme.colors.selected : undefined}
                 >
-                  {isSelected ? '▸ ' : '  '}
+                  {isSelected ? "▸ " : "  "}
                   {transfer.domain.padEnd(30)}
                   {transfer.status.padEnd(15)}
-                  {transfer.transferDate || 'Pending'}
+                  {transfer.transferDate || "Pending"}
                 </Text>
               </Box>
             )}

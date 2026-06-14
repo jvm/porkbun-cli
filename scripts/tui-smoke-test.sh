@@ -1,24 +1,20 @@
 #!/usr/bin/env bash
 # tui-smoke-test.sh — Validate the Porkbun TUI runs as expected via tmux.
 # Usage:  ./scripts/tui-smoke-test.sh
-# Depends: tmux, bash, timeout (or gtimeout on macOS), and the tui-testing skill.
+# Depends: tmux, bash, timeout (or gtimeout on macOS), and the local
+# tui-testing helpers in ./scripts/tui-lib.sh.
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SELF_DIR/.." && pwd)"
 CLI_BIN="node $PROJECT_DIR/dist/cli.js"
-SKILL_DIR="$HOME/.pi/agent/skills/tui-testing"
-TUI_LIB="$SKILL_DIR/scripts/tui-lib.sh"
 
-# Override artifact dir before sourcing the library so it picks up the right path
-PROJECT_ARTIFACT_DIR="$PROJECT_DIR/tmp/tui-smoke-artifacts"
-mkdir -p "$PROJECT_ARTIFACT_DIR"
-export TUI_ARTIFACT_DIR="$PROJECT_ARTIFACT_DIR"
+TUI_ARTIFACT_DIR="$PROJECT_DIR/tmp/tui-smoke-artifacts"
+mkdir -p "$TUI_ARTIFACT_DIR"
+export TUI_ARTIFACT_DIR
 export TUI_TEST_NAME="porkbun-tui-smoke"
 
-# Source the tui-testing library
-echo "tui-lib: artifacts dir=$TUI_ARTIFACT_DIR" >&2
-source "$TUI_LIB"
+source ./scripts/tui-lib.sh
 
 echo "=== Porkbun TUI Smoke Test ==="
 echo "Artifact dir: $TUI_ARTIFACT_DIR"
@@ -34,17 +30,11 @@ else
   exit 1
 fi
 
-# -------------------------------------------------------
-# Step 2: Launch TUI in detached tmux session
-# -------------------------------------------------------
 echo ""
 echo "2. Launching TUI in tmux (120x40)..."
 tui_start "$CLI_BIN tui" 120 40
 echo "   ✓ Session created (pane: $tui_pane_id)"
 
-# -------------------------------------------------------
-# Step 3: Wait for credential validation phase
-# -------------------------------------------------------
 echo ""
 echo "3. Waiting for credential validation..."
 if tui_wait_ready "Validating credentials" 10 0.5 1; then
@@ -55,9 +45,6 @@ else
   tui_fail "$tui_failure_class" "TUI did not show credential validation"
 fi
 
-# -------------------------------------------------------
-# Step 4: Wait for Domains screen (after successful auth)
-# -------------------------------------------------------
 echo ""
 echo "4. Waiting for Domains screen..."
 if tui_wait_ready "Domains" 30 0.5 0; then
@@ -70,9 +57,6 @@ else
   tui_fail "$tui_failure_class" "TUI did not reach Domains screen"
 fi
 
-# -------------------------------------------------------
-# Step 5: Verify Domains screen content
-# -------------------------------------------------------
 echo ""
 echo "5. Asserting Domains screen content..."
 tui_assert_screen "Domains"
@@ -93,9 +77,6 @@ else
   echo "   ⚠  Balance not visible (may be loading)"
 fi
 
-# -------------------------------------------------------
-# Step 6: Interact — navigate the domain list
-# -------------------------------------------------------
 echo ""
 echo "6. Testing navigation..."
 tui_send_keys Down; sleep 0.5
@@ -109,9 +90,6 @@ else
   echo "   ⚠  Screen unchanged after Down keys (may need more presses)"
 fi
 
-# -------------------------------------------------------
-# Step 7: Test domain detail screen
-# -------------------------------------------------------
 echo ""
 echo "7. Opening domain detail..."
 tui_send_keys Enter
@@ -127,9 +105,6 @@ else
   echo "   ⚠  Domain detail screen not detected"
 fi
 
-# -------------------------------------------------------
-# Step 8: Collect final artifacts
-# -------------------------------------------------------
 echo ""
 echo "8. Collecting artifacts..."
 tui_collect_artifacts "final"

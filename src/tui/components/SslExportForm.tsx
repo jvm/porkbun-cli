@@ -1,13 +1,14 @@
 /**
  * SSL export form - secure export of SSL certificate bundles
  */
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
-import { mkdir, writeFile, chmod, stat } from 'node:fs/promises';
-import { join } from 'node:path';
-import type { Theme } from '../theme.js';
-import type { NormalizedSslBundle } from '../types.js';
+import React, { useState } from "react";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
+import TextInput from "ink-text-input";
+import { join } from "node:path";
+import { chmod, mkdir, writeFile } from "../../lib/safe-io.js";
+import type { Theme } from "../theme.js";
+import type { NormalizedSslBundle } from "../types.js";
 
 export interface SslExportFormProps {
   theme: Theme;
@@ -17,8 +18,14 @@ export interface SslExportFormProps {
   onCancel: () => void;
 }
 
-export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: SslExportFormProps) {
-  const [exportPath, setExportPath] = useState('');
+export function SslExportForm({
+  theme,
+  domain,
+  sslBundle,
+  onExport,
+  onCancel,
+}: SslExportFormProps) {
+  const [exportPath, setExportPath] = useState("");
   const [overwrite, setOverwrite] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, setExporting] = useState(false);
@@ -26,7 +33,7 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
 
   const doExport = async () => {
     if (!exportPath) {
-      setError('Export path is required');
+      setError("Export path is required");
       return;
     }
 
@@ -38,47 +45,29 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
       // (the SSL bundle's owner). File modes 0700 / 0600 below are the
       // real security boundary; path validation would just be friction
       // for the legitimate use case.
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await mkdir(exportPath, { recursive: true, mode: 0o700 });
-
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await chmod(exportPath, 0o700);
 
       const certPath = join(exportPath, `${domain}.certificate-chain.pem`);
       const keyPath = join(exportPath, `${domain}.private-key.pem`);
       const pubPath = join(exportPath, `${domain}.public-key.pem`);
 
-      // Check if files exist
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      const certExists = await stat(certPath).then(() => true).catch(() => false);
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      const keyExists = await stat(keyPath).then(() => true).catch(() => false);
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      const pubExists = await stat(pubPath).then(() => true).catch(() => false);
+      const writeMode = overwrite ? "w" : "wx";
 
-      if ((certExists || keyExists || pubExists) && !overwrite) {
-        setError('Files already exist. Press Enter to overwrite or Esc to cancel.');
-        setExporting(false);
-        return;
-      }
-
-      // Write files with secure permissions
+      // Write files with secure permissions. When overwrite=false,
+      // `wx` makes the create operation atomic and avoids check-then-act races.
       if (sslBundle.certificateChain) {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await writeFile(certPath, sslBundle.certificateChain, { mode: 0o644 });
+        await writeFile(certPath, sslBundle.certificateChain, { mode: 0o644, flag: writeMode });
       }
 
       if (sslBundle.privateKey) {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await writeFile(keyPath, sslBundle.privateKey, { mode: 0o600 });
+        await writeFile(keyPath, sslBundle.privateKey, { mode: 0o600, flag: writeMode });
         // writeFile's mode option is only honored on create; re-apply for overwrites.
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await chmod(keyPath, 0o600);
       }
 
       if (sslBundle.publicKey) {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await writeFile(pubPath, sslBundle.publicKey, { mode: 0o644 });
+        await writeFile(pubPath, sslBundle.publicKey, { mode: 0o644, flag: writeMode });
       }
 
       setSuccess(`Exported SSL bundle to ${exportPath}`);
@@ -86,14 +75,18 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
         onExport();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      if (err instanceof Error && "code" in err && err.code === "EEXIST" && !overwrite) {
+        setError("Files already exist. Press Enter to overwrite or Esc to cancel.");
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
       setExporting(false);
     }
   };
 
   useInput((input, key) => {
     if (key.escape) {
-      if (error && error.includes('already exist')) {
+      if (error && error.includes("already exist")) {
         onCancel();
       } else {
         onCancel();
@@ -102,7 +95,7 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
     }
 
     if (key.return) {
-      if (error && error.includes('already exist')) {
+      if (error && error.includes("already exist")) {
         setOverwrite(true);
         doExport();
       } else {
@@ -114,18 +107,16 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
   if (success) {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color={theme.colors.success}>✓ {success}</Text>
+        <Text bold color={theme.colors.success}>
+          ✓ {success}
+        </Text>
         <Box marginTop={1} flexDirection="column">
           <Text dimColor>Files exported:</Text>
           {sslBundle.certificateChain && (
-            <Text dimColor>  - {domain}.certificate-chain.pem (0644)</Text>
+            <Text dimColor> - {domain}.certificate-chain.pem (0644)</Text>
           )}
-          {sslBundle.privateKey && (
-            <Text dimColor>  - {domain}.private-key.pem (0600)</Text>
-          )}
-          {sslBundle.publicKey && (
-            <Text dimColor>  - {domain}.public-key.pem (0644)</Text>
-          )}
+          {sslBundle.privateKey && <Text dimColor> - {domain}.private-key.pem (0600)</Text>}
+          {sslBundle.publicKey && <Text dimColor> - {domain}.public-key.pem (0644)</Text>}
         </Box>
       </Box>
     );
@@ -140,21 +131,22 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
       </Box>
       <Box marginTop={1} flexDirection="column">
         <Text bold>Files to export:</Text>
-        {sslBundle.certificateChain && (
-          <Text dimColor>  ✓ {domain}.certificate-chain.pem</Text>
-        )}
+        {sslBundle.certificateChain && <Text dimColor> ✓ {domain}.certificate-chain.pem</Text>}
         {sslBundle.privateKey && (
-          <Text color={theme.colors.warning} dimColor>  ✓ {domain}.private-key.pem (0600)</Text>
+          <Text color={theme.colors.warning} dimColor>
+            {" "}
+            ✓ {domain}.private-key.pem (0600)
+          </Text>
         )}
-        {sslBundle.publicKey && (
-          <Text dimColor>  ✓ {domain}.public-key.pem</Text>
-        )}
+        {sslBundle.publicKey && <Text dimColor> ✓ {domain}.public-key.pem</Text>}
       </Box>
       <Box marginTop={1} flexDirection="column">
-        <Text bold color={theme.colors.warning}>⚠ Security Notice:</Text>
-        <Text dimColor>  - Private key will be exported with mode 0600</Text>
-        <Text dimColor>  - Export directory will be created with mode 0700</Text>
-        <Text dimColor>  - Ensure the export directory is secure</Text>
+        <Text bold color={theme.colors.warning}>
+          ⚠ Security Notice:
+        </Text>
+        <Text dimColor> - Private key will be exported with mode 0600</Text>
+        <Text dimColor> - Export directory will be created with mode 0700</Text>
+        <Text dimColor> - Ensure the export directory is secure</Text>
       </Box>
       {error && (
         <Box marginTop={1}>

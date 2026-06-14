@@ -7,8 +7,8 @@
  * on failure. This hook forces callers to inspect the returned state and
  * exposes a uniform submitting flag and status update.
  */
-import { useCallback, useRef, useState } from 'react';
-import type { ResourceState } from '../types.js';
+import { useCallback, useRef, useState } from "react";
+import type { ResourceState } from "../types.js";
 
 export interface UseMutationOptions {
   onSuccess?: (message: string) => void;
@@ -25,7 +25,10 @@ export interface UseMutationResult {
    * Returns the ResourceState so callers can chain post-success work
    * (e.g. close the form, reload data).
    */
-  run: <T>(serviceCall: () => Promise<ResourceState<T>>, successMessage: string) => Promise<ResourceState<T> | undefined>;
+  run: <T>(
+    serviceCall: () => Promise<ResourceState<T>>,
+    successMessage: string,
+  ) => Promise<ResourceState<T> | undefined>;
   clearError: () => void;
 }
 
@@ -41,11 +44,11 @@ export async function runMutation<T>(
 ): Promise<ResourceState<T> | undefined> {
   try {
     const result = await serviceCall();
-    if (result.status === 'loaded') {
+    if (result.status === "loaded") {
       options.onSuccess?.(successMessage);
       return result;
     }
-    const message = result.error?.message ?? 'Unknown error';
+    const message = result.error?.message ?? "Unknown error";
     options.onError?.(message);
     return result;
   } catch (err) {
@@ -66,7 +69,10 @@ export function useMutation(options: UseMutationOptions = {}): UseMutationResult
   const [error, setError] = useState<string | null>(null);
 
   const run = useCallback(
-    async <T>(serviceCall: () => Promise<ResourceState<T>>, successMessage: string): Promise<ResourceState<T> | undefined> => {
+    async <T>(
+      serviceCall: () => Promise<ResourceState<T>>,
+      successMessage: string,
+    ): Promise<ResourceState<T> | undefined> => {
       setSubmitting(true);
       setError(null);
       try {

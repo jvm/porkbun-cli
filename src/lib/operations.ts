@@ -24,7 +24,7 @@ export interface OperationDefinition {
 const basicFields: FieldDefinition[] = [
   { name: "status", type: "string" },
   { name: "message", type: "string | undefined" },
-  { name: "code", type: "string | undefined" }
+  { name: "code", type: "string | undefined" },
 ];
 
 const domainFields: FieldDefinition[] = [
@@ -33,7 +33,7 @@ const domainFields: FieldDefinition[] = [
   { name: "tld", type: "string" },
   { name: "expireDate", type: "string" },
   { name: "autoRenew", type: "integer" },
-  { name: "apiAccess", type: "integer" }
+  { name: "apiAccess", type: "integer" },
 ];
 
 const dnsRecordFields: FieldDefinition[] = [
@@ -43,7 +43,7 @@ const dnsRecordFields: FieldDefinition[] = [
   { name: "content", type: "string" },
   { name: "ttl", type: "string" },
   { name: "prio", type: "string | null" },
-  { name: "notes", type: "string | null" }
+  { name: "notes", type: "string | null" },
 ];
 
 export const OPERATIONS: OperationDefinition[] = [
@@ -56,7 +56,10 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "optional",
     authPlacement: "body",
-    outputFields: [{ name: "yourIp", type: "string" }, { name: "credentialsValid", type: "boolean | undefined" }]
+    outputFields: [
+      { name: "yourIp", type: "string" },
+      { name: "credentialsValid", type: "boolean | undefined" },
+    ],
   },
   {
     operationId: "pingGet",
@@ -67,7 +70,10 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "optional",
     authPlacement: "header",
-    outputFields: [{ name: "yourIp", type: "string" }, { name: "credentialsValid", type: "boolean | undefined" }]
+    outputFields: [
+      { name: "yourIp", type: "string" },
+      { name: "credentialsValid", type: "boolean | undefined" },
+    ],
   },
   {
     operationId: "ipPost",
@@ -77,7 +83,10 @@ export const OPERATIONS: OperationDefinition[] = [
     path: "/ip",
     mutating: false,
     auth: "none",
-    outputFields: [{ name: "yourIp", type: "string" }, { name: "xForwardedFor", type: "string | undefined" }]
+    outputFields: [
+      { name: "yourIp", type: "string" },
+      { name: "xForwardedFor", type: "string | undefined" },
+    ],
   },
   {
     operationId: "getIp",
@@ -87,7 +96,10 @@ export const OPERATIONS: OperationDefinition[] = [
     path: "/ip",
     mutating: false,
     auth: "none",
-    outputFields: [{ name: "yourIp", type: "string" }, { name: "xForwardedFor", type: "string | undefined" }]
+    outputFields: [
+      { name: "yourIp", type: "string" },
+      { name: "xForwardedFor", type: "string | undefined" },
+    ],
   },
   {
     operationId: "getPricing",
@@ -97,7 +109,7 @@ export const OPERATIONS: OperationDefinition[] = [
     path: "/pricing/get",
     mutating: false,
     auth: "none",
-    outputFields: [{ name: "pricing", type: "object" }]
+    outputFields: [{ name: "pricing", type: "object" }],
   },
   {
     operationId: "getPricingGet",
@@ -107,7 +119,7 @@ export const OPERATIONS: OperationDefinition[] = [
     path: "/pricing/get",
     mutating: false,
     auth: "none",
-    outputFields: [{ name: "pricing", type: "object" }]
+    outputFields: [{ name: "pricing", type: "object" }],
   },
   {
     operationId: "apikeyRequest",
@@ -117,7 +129,7 @@ export const OPERATIONS: OperationDefinition[] = [
     path: "/apikey/request",
     mutating: true,
     auth: "none",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "apikeyRetrieve",
@@ -127,7 +139,7 @@ export const OPERATIONS: OperationDefinition[] = [
     path: "/apikey/retrieve",
     mutating: false,
     auth: "none",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "domainCheckDomain",
@@ -138,7 +150,10 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "body",
-    outputFields: [{ name: "response", type: "object" }, { name: "limits", type: "object | undefined" }]
+    outputFields: [
+      { name: "response", type: "object" },
+      { name: "limits", type: "object | undefined" },
+    ],
   },
   {
     operationId: "domainCreate",
@@ -153,8 +168,8 @@ export const OPERATIONS: OperationDefinition[] = [
       { name: "domain", type: "string" },
       { name: "orderId", type: "integer" },
       { name: "cost", type: "integer | undefined" },
-      { name: "balance", type: "integer | undefined" }
-    ]
+      { name: "balance", type: "integer | undefined" },
+    ],
   },
   {
     operationId: "domainRenew",
@@ -168,8 +183,8 @@ export const OPERATIONS: OperationDefinition[] = [
     outputFields: [
       { name: "domain", type: "string" },
       { name: "orderId", type: "integer" },
-      { name: "expirationDate", type: "string | undefined" }
-    ]
+      { name: "expirationDate", type: "string | undefined" },
+    ],
   },
   {
     operationId: "transferDomain",
@@ -183,8 +198,8 @@ export const OPERATIONS: OperationDefinition[] = [
     outputFields: [
       { name: "domain", type: "string" },
       { name: "orderId", type: "integer | undefined" },
-      { name: "transferId", type: "integer | undefined" }
-    ]
+      { name: "transferId", type: "integer | undefined" },
+    ],
   },
   {
     operationId: "getTransferGet",
@@ -195,7 +210,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "header",
-    outputFields: [{ name: "transfer", type: "object" }]
+    outputFields: [{ name: "transfer", type: "object" }],
   },
   {
     operationId: "listTransfersGet",
@@ -211,8 +226,8 @@ export const OPERATIONS: OperationDefinition[] = [
       { name: "domain", type: "string" },
       { name: "status", type: "string" },
       { name: "statusDescription", type: "string" },
-      { name: "transferDate", type: "string" }
-    ]
+      { name: "transferDate", type: "string" },
+    ],
   },
   {
     operationId: "listDomains",
@@ -224,7 +239,7 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "body",
     listKey: "domains",
-    outputFields: domainFields
+    outputFields: domainFields,
   },
   {
     operationId: "getDomains",
@@ -236,7 +251,7 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "header",
     listKey: "domains",
-    outputFields: domainFields
+    outputFields: domainFields,
   },
   {
     operationId: "getDomain",
@@ -247,7 +262,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "header",
-    outputFields: domainFields
+    outputFields: domainFields,
   },
   {
     operationId: "domainUpdateAutoRenew",
@@ -258,7 +273,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: [{ name: "results", type: "object" }]
+    outputFields: [{ name: "results", type: "object" }],
   },
   {
     operationId: "domainGetNs",
@@ -269,7 +284,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "body",
-    outputFields: [{ name: "ns", type: "string[]" }]
+    outputFields: [{ name: "ns", type: "string[]" }],
   },
   {
     operationId: "getDomainNs",
@@ -280,7 +295,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "header",
-    outputFields: [{ name: "ns", type: "string[]" }]
+    outputFields: [{ name: "ns", type: "string[]" }],
   },
   {
     operationId: "domainUpdateNs",
@@ -291,7 +306,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "domainGetGlue",
@@ -303,7 +318,10 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "body",
     listKey: "records",
-    outputFields: [{ name: "subdomain", type: "string" }, { name: "ips", type: "string[]" }]
+    outputFields: [
+      { name: "subdomain", type: "string" },
+      { name: "ips", type: "string[]" },
+    ],
   },
   {
     operationId: "getDomainGlue",
@@ -315,7 +333,10 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "header",
     listKey: "records",
-    outputFields: [{ name: "subdomain", type: "string" }, { name: "ips", type: "string[]" }]
+    outputFields: [
+      { name: "subdomain", type: "string" },
+      { name: "ips", type: "string[]" },
+    ],
   },
   {
     operationId: "domainCreateGlue",
@@ -326,7 +347,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "domainUpdateGlue",
@@ -337,7 +358,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "domainDeleteGlue",
@@ -348,7 +369,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "domainGetUrlForwarding",
@@ -364,8 +385,8 @@ export const OPERATIONS: OperationDefinition[] = [
       { name: "id", type: "string" },
       { name: "subdomain", type: "string" },
       { name: "location", type: "string" },
-      { name: "type", type: "string" }
-    ]
+      { name: "type", type: "string" },
+    ],
   },
   {
     operationId: "getDomainUrlForwarding",
@@ -381,8 +402,8 @@ export const OPERATIONS: OperationDefinition[] = [
       { name: "id", type: "string" },
       { name: "subdomain", type: "string" },
       { name: "location", type: "string" },
-      { name: "type", type: "string" }
-    ]
+      { name: "type", type: "string" },
+    ],
   },
   {
     operationId: "domainAddUrlForward",
@@ -393,7 +414,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "domainDeleteUrlForward",
@@ -404,7 +425,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "dnsRetrieve",
@@ -416,7 +437,7 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "body",
     listKey: "records",
-    outputFields: dnsRecordFields
+    outputFields: dnsRecordFields,
   },
   {
     operationId: "getDnsRecords",
@@ -428,7 +449,7 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "header",
     listKey: "records",
-    outputFields: dnsRecordFields
+    outputFields: dnsRecordFields,
   },
   {
     operationId: "dnsRetrieveById",
@@ -439,7 +460,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "body",
-    outputFields: dnsRecordFields
+    outputFields: dnsRecordFields,
   },
   {
     operationId: "getDnsRecordById",
@@ -450,7 +471,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "header",
-    outputFields: dnsRecordFields
+    outputFields: dnsRecordFields,
   },
   {
     operationId: "dnsRetrieveByNameType",
@@ -462,7 +483,7 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "body",
     listKey: "records",
-    outputFields: dnsRecordFields
+    outputFields: dnsRecordFields,
   },
   {
     operationId: "getDnsRecordsByNameType",
@@ -474,7 +495,7 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "header",
     listKey: "records",
-    outputFields: dnsRecordFields
+    outputFields: dnsRecordFields,
   },
   {
     operationId: "dnsCreate",
@@ -485,7 +506,10 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: [{ name: "id", type: "string" }, { name: "status", type: "string" }]
+    outputFields: [
+      { name: "id", type: "string" },
+      { name: "status", type: "string" },
+    ],
   },
   {
     operationId: "dnsEdit",
@@ -496,7 +520,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "dnsEditByNameType",
@@ -507,7 +531,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "dnsDelete",
@@ -518,7 +542,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "dnsDeleteByNameType",
@@ -529,7 +553,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "dnsGetDnssecRecords",
@@ -541,7 +565,11 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "body",
     listKey: "records",
-    outputFields: [{ name: "keyTag", type: "string" }, { name: "alg", type: "string" }, { name: "digestType", type: "string" }]
+    outputFields: [
+      { name: "keyTag", type: "string" },
+      { name: "alg", type: "string" },
+      { name: "digestType", type: "string" },
+    ],
   },
   {
     operationId: "getDnssecRecords",
@@ -553,7 +581,11 @@ export const OPERATIONS: OperationDefinition[] = [
     auth: "required",
     authPlacement: "header",
     listKey: "records",
-    outputFields: [{ name: "keyTag", type: "string" }, { name: "alg", type: "string" }, { name: "digestType", type: "string" }]
+    outputFields: [
+      { name: "keyTag", type: "string" },
+      { name: "alg", type: "string" },
+      { name: "digestType", type: "string" },
+    ],
   },
   {
     operationId: "dnsCreateDnssecRecord",
@@ -564,7 +596,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "dnsDeleteDnssecRecord",
@@ -575,7 +607,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "sslRetrieve",
@@ -586,7 +618,11 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "body",
-    outputFields: [{ name: "certificatechain", type: "string" }, { name: "privatekey", type: "string" }, { name: "publickey", type: "string" }]
+    outputFields: [
+      { name: "certificatechain", type: "string" },
+      { name: "privatekey", type: "string" },
+      { name: "publickey", type: "string" },
+    ],
   },
   {
     operationId: "getSslRetrieve",
@@ -597,7 +633,11 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "header",
-    outputFields: [{ name: "certificatechain", type: "string" }, { name: "privatekey", type: "string" }, { name: "publickey", type: "string" }]
+    outputFields: [
+      { name: "certificatechain", type: "string" },
+      { name: "privatekey", type: "string" },
+      { name: "publickey", type: "string" },
+    ],
   },
   {
     operationId: "emailSetPassword",
@@ -608,7 +648,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "listMarketplaceListingsGet",
@@ -624,8 +664,8 @@ export const OPERATIONS: OperationDefinition[] = [
       { name: "domain", type: "string" },
       { name: "tld", type: "string" },
       { name: "price", type: "number" },
-      { name: "sld_length", type: "integer" }
-    ]
+      { name: "sld_length", type: "integer" },
+    ],
   },
   {
     operationId: "listMarketplaceListings",
@@ -641,8 +681,8 @@ export const OPERATIONS: OperationDefinition[] = [
       { name: "domain", type: "string" },
       { name: "tld", type: "string" },
       { name: "price", type: "number" },
-      { name: "sld_length", type: "integer" }
-    ]
+      { name: "sld_length", type: "integer" },
+    ],
   },
   {
     operationId: "createAccountInvite",
@@ -653,7 +693,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: true,
     auth: "required",
     authPlacement: "body",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "getAccountInviteStatus",
@@ -664,7 +704,7 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "header",
-    outputFields: basicFields
+    outputFields: basicFields,
   },
   {
     operationId: "getBalance",
@@ -675,7 +715,10 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "header",
-    outputFields: [{ name: "balance", type: "integer" }, { name: "display", type: "string" }]
+    outputFields: [
+      { name: "balance", type: "integer" },
+      { name: "display", type: "string" },
+    ],
   },
   {
     operationId: "getApiSettings",
@@ -686,11 +729,16 @@ export const OPERATIONS: OperationDefinition[] = [
     mutating: false,
     auth: "required",
     authPlacement: "header",
-    outputFields: [{ name: "settings", type: "object" }, { name: "monthlySpend", type: "integer" }]
-  }
+    outputFields: [
+      { name: "settings", type: "object" },
+      { name: "monthlySpend", type: "integer" },
+    ],
+  },
 ];
 
-export const OPERATIONS_BY_ID = new Map(OPERATIONS.map((operation) => [operation.operationId, operation]));
+export const OPERATIONS_BY_ID = new Map(
+  OPERATIONS.map((operation) => [operation.operationId, operation]),
+);
 
 export function requireOperation(operationId: string): OperationDefinition {
   const operation = OPERATIONS_BY_ID.get(operationId);

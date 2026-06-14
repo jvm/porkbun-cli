@@ -16,12 +16,6 @@ const SENSITIVE_KEY_PATTERNS = [
   /token/i,
 ];
 
-// Strip control characters: matches bytes 0x00-0x1F except \t (0x09),
-// \n (0x0A), \r (0x0D), and DEL (0x7F). The `s` flag lets `.` cross
-// line breaks. We don't use the `u` flag because the input may be a
-// partially-decoded byte stream.
-const CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
-const ANSI_ESCAPE = /\x1B\[[0-9;]*[A-Za-z]/g;
 const MAX_FIELD_LENGTH = 200;
 
 /**
@@ -29,13 +23,47 @@ const MAX_FIELD_LENGTH = 200;
  * Allows only explicitly handled line breaks and tabs.
  */
 export function sanitizeString(value: unknown): string {
-  if (value === null || value === undefined) return '';
+  if (value === null || value === undefined) return "";
   const str = String(value);
-  return str
-    .replace(ANSI_ESCAPE, '')
-    .replace(CONTROL_CHARS, '')
-    .replace(/[\r\n]+/g, ' ')
-    .trim();
+  let out = "";
+  let lastWasSpace = false;
+
+  for (let i = 0; i < str.length; i += 1) {
+    const code = str.charCodeAt(i);
+
+    if (code === 0x1b && str.charCodeAt(i + 1) === 0x5b) {
+      i += 2;
+      while (i < str.length) {
+        const c = str.charCodeAt(i);
+        if (c >= 0x40 && c <= 0x7e) break;
+        i += 1;
+      }
+      continue;
+    }
+
+    if (code === 0x0a || code === 0x0d) {
+      if (!lastWasSpace) {
+        out += " ";
+        lastWasSpace = true;
+      }
+      continue;
+    }
+
+    if (code === 0x09) {
+      out += "\t";
+      lastWasSpace = false;
+      continue;
+    }
+
+    if (code < 0x20 || code === 0x7f) {
+      continue;
+    }
+
+    out += str.charAt(i);
+    lastWasSpace = false;
+  }
+
+  return out.trim();
 }
 
 /**
@@ -50,14 +78,17 @@ export function truncateField(value: string, maxLen = MAX_FIELD_LENGTH): string 
  * Check if a key matches a sensitive pattern.
  */
 export function isSensitiveKey(key: string): boolean {
-  return SENSITIVE_KEY_PATTERNS.some(pattern => pattern.test(key));
+  for (const pattern of SENSITIVE_KEY_PATTERNS) {
+    if (pattern.test(key)) return true;
+  }
+  return false;
 }
 
 /**
  * Redact a value for review screens.
  */
 export function redactReviewValue(key: string, value: unknown): string {
-  if (isSensitiveKey(key)) return '[REDACTED]';
+  if (isSensitiveKey(key)) return "[REDACTED]";
   return sanitizeString(value);
 }
 
@@ -68,9 +99,9 @@ export function redactErrorValue(value: unknown): string {
   const str = sanitizeString(value);
   // Redact anything that looks like an API key or secret
   return str
-    .replace(/pk[12]_live_[a-zA-Z0-9]+/g, '[REDACTED]')
-    .replace(/sk[12]_live_[a-zA-Z0-9]+/g, '[REDACTED]')
-    .replace(/-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----/g, '[REDACTED]');
+    .replace(/pk[12]_live_[a-zA-Z0-9]+/g, "[REDACTED]")
+    .replace(/sk[12]_live_[a-zA-Z0-9]+/g, "[REDACTED]")
+    .replace(/-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----/g, "[REDACTED]");
 }
 
 /**
@@ -87,8 +118,8 @@ export function redactObject(obj: Record<string, unknown>): Record<string, unkno
   const result = new Map<string, unknown>();
   for (const [key, value] of Object.entries(obj)) {
     if (isSensitiveKey(key)) {
-      result.set(key, '[REDACTED]');
-    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      result.set(key, "[REDACTED]");
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
       result.set(key, redactObject(value as Record<string, unknown>));
     } else {
       result.set(key, value);

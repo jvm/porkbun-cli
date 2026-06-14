@@ -3,11 +3,11 @@ import YAML from "yaml";
 export type OutputFormat = "table" | "json" | "ndjson" | "yaml";
 
 export interface OutputOptions {
-  output?: string;
-  fields?: string;
-  limit?: number;
-  offset?: number;
-  stdoutIsTty?: boolean;
+  output?: string | undefined;
+  fields?: string | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
+  stdoutIsTty?: boolean | undefined;
 }
 
 export interface ListEnvelope {
@@ -15,7 +15,7 @@ export interface ListEnvelope {
   total: number;
   limit: number;
   offset: number;
-  status?: string;
+  status?: string | undefined;
 }
 
 const SECRET_KEYS = new Set([
@@ -26,19 +26,23 @@ const SECRET_KEYS = new Set([
   "privatekey",
   "requesttoken",
   "token",
-  "authorization"
+  "authorization",
 ]);
 const BLOCKED_PATH_PARTS = new Set(["__proto__", "prototype", "constructor"]);
 
-export function chooseOutputFormat(output: string | undefined, stdoutIsTty = Boolean(process.stdout.isTTY)): OutputFormat {
+export function chooseOutputFormat(
+  output: string | undefined,
+  stdoutIsTty = Boolean(process.stdout.isTTY),
+): OutputFormat {
   if (!output || output === "auto") return stdoutIsTty ? "table" : "json";
-  if (output === "table" || output === "json" || output === "ndjson" || output === "yaml") return output;
+  if (output === "table" || output === "json" || output === "ndjson" || output === "yaml")
+    return output;
   throw new Error(`Unsupported output format: ${output}`);
 }
 
 export function normalizeForOutput(
   data: unknown,
-  input: OutputOptions & { listKey?: string }
+  input: OutputOptions & { listKey?: string | undefined },
 ): unknown {
   let next = data;
   if (input.listKey) {
@@ -66,7 +70,12 @@ export function render(data: unknown, options: OutputOptions = {}): string {
   }
 }
 
-export function envelopeList(data: unknown, listKey: string, limitInput?: number, offsetInput?: number): unknown {
+export function envelopeList(
+  data: unknown,
+  listKey: string,
+  limitInput?: number,
+  offsetInput?: number,
+): unknown {
   if (!isRecord(data)) return data;
   // Use Reflect.get to read a dynamic key without flagging
   // eslint-plugin-security's detect-object-injection rule.
@@ -82,7 +91,7 @@ export function envelopeList(data: unknown, listKey: string, limitInput?: number
     items,
     total: list.length,
     limit,
-    offset
+    offset,
   } satisfies ListEnvelope;
 }
 
@@ -99,7 +108,7 @@ export function selectFields(value: unknown, fields: string[]): unknown {
   if (isRecord(value) && Array.isArray(value.items)) {
     return {
       ...value,
-      items: value.items.map((entry) => selectObjectFields(entry, fields))
+      items: value.items.map((entry) => selectObjectFields(entry, fields)),
     };
   }
   return selectObjectFields(value, fields);
@@ -111,8 +120,8 @@ export function redact(value: unknown): unknown {
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => [
       key,
-      isSecretKey(key) ? "[REDACTED]" : redact(entry)
-    ])
+      isSecretKey(key) ? "[REDACTED]" : redact(entry),
+    ]),
   );
 }
 
@@ -125,7 +134,7 @@ function selectObjectFields(value: unknown, fields: string[]): unknown {
   return Object.fromEntries(
     fields
       .map((field) => [field, readPath(value, field)])
-      .filter(([, entry]) => entry !== undefined)
+      .filter(([, entry]) => entry !== undefined),
   );
 }
 
@@ -162,7 +171,7 @@ function rowsForOutput(value: unknown): unknown[] {
   if (isRecord(value) && isRecord(value.pricing)) {
     return Object.entries(value.pricing).map(([tld, prices]) => ({
       tld,
-      ...(isRecord(prices) ? prices : { value: prices })
+      ...(isRecord(prices) ? prices : { value: prices }),
     }));
   }
   if (isRecord(value)) {
@@ -176,17 +185,21 @@ function table(rows: Array<Record<string, unknown>>): string {
     rows.reduce((set, row) => {
       for (const key of Object.keys(row)) set.add(key);
       return set;
-    }, new Set<string>())
+    }, new Set<string>()),
   ).slice(0, 12);
 
-  const renderedRows = rows.map((row) => columns.map((column) => formatValue(Reflect.get(row, column))));
-  const widths = columns.map((column, index) =>
-    Math.max(column.length, ...renderedRows.map((row) => row.at(index)?.length ?? 0))
+  const renderedRows = rows.map((row) =>
+    columns.map((column) => formatValue(Reflect.get(row, column))),
   );
-  const header = columns.map((column, index) => column.padEnd(widths.at(index) ?? column.length)).join("  ");
+  const widths = columns.map((column, index) =>
+    Math.max(column.length, ...renderedRows.map((row) => row.at(index)?.length ?? 0)),
+  );
+  const header = columns
+    .map((column, index) => column.padEnd(widths.at(index) ?? column.length))
+    .join("  ");
   const separator = widths.map((width) => "-".repeat(width)).join("  ");
   const body = renderedRows.map((row) =>
-    row.map((cell, index) => cell.padEnd(widths.at(index) ?? cell.length)).join("  ")
+    row.map((cell, index) => cell.padEnd(widths.at(index) ?? cell.length)).join("  "),
   );
   return `${[header, separator, ...body].join("\n")}\n`;
 }

@@ -1,20 +1,20 @@
 /**
  * TUI theme - color/no-color/icon choices and semantic labels.
  */
-import type { TerminalCapabilities } from './types.js';
+import type { TerminalCapabilities } from "./types.js";
 
 export interface Theme {
   // Colors (undefined when no-color)
   colors: {
-    primary: string | undefined;
-    secondary: string | undefined;
-    success: string | undefined;
-    warning: string | undefined;
-    danger: string | undefined;
-    info: string | undefined;
-    muted: string | undefined;
-    selected: string | undefined;
-    selectedBg: string | undefined;
+    primary: string;
+    secondary: string;
+    success: string;
+    warning: string;
+    danger: string;
+    info: string;
+    muted: string;
+    selected: string;
+    selectedBg: string;
   };
   // Icons with plain-text fallbacks
   icons: {
@@ -53,42 +53,42 @@ export function createTheme(caps: TerminalCapabilities): Theme {
 
   return {
     colors: {
-      primary: hasColor ? 'cyan' : undefined,
-      secondary: hasColor ? 'blue' : undefined,
-      success: hasColor ? 'green' : undefined,
-      warning: hasColor ? 'yellow' : undefined,
-      danger: hasColor ? 'red' : undefined,
-      info: hasColor ? 'blue' : undefined,
-      muted: hasColor ? undefined : undefined,
-      selected: hasColor ? 'white' : undefined,
-      selectedBg: hasColor ? 'cyan' : undefined,
+      primary: hasColor ? "cyan" : (undefined as unknown as string),
+      secondary: hasColor ? "blue" : (undefined as unknown as string),
+      success: hasColor ? "green" : (undefined as unknown as string),
+      warning: hasColor ? "yellow" : (undefined as unknown as string),
+      danger: hasColor ? "red" : (undefined as unknown as string),
+      info: hasColor ? "blue" : (undefined as unknown as string),
+      muted: hasColor ? (undefined as unknown as string) : (undefined as unknown as string),
+      selected: hasColor ? "white" : (undefined as unknown as string),
+      selectedBg: hasColor ? "cyan" : (undefined as unknown as string),
     },
     icons: {
-      selected: hasUnicode ? '▸' : '>',
-      unselected: ' ',
-      check: hasUnicode ? '✓' : '[OK]',
-      cross: hasUnicode ? '✗' : '[X]',
-      warning: hasUnicode ? '⚠' : '[!]',
-      info: hasUnicode ? 'ℹ' : '[i]',
-      loading: hasUnicode ? '…' : '...',
-      stale: hasUnicode ? '⟳' : '[stale]',
-      arrow: hasUnicode ? '→' : '->',
-      bullet: hasUnicode ? '•' : '-',
-      locked: hasUnicode ? '🔒' : '[L]',
-      unlocked: hasUnicode ? '🔓' : '[U]',
-      web: hasUnicode ? '🌐' : '[web]',
-      billable: hasUnicode ? '$' : '[$]',
-      destructive: hasUnicode ? '⚠' : '[!!]',
+      selected: hasUnicode ? "▸" : ">",
+      unselected: " ",
+      check: hasUnicode ? "✓" : "[OK]",
+      cross: hasUnicode ? "✗" : "[X]",
+      warning: hasUnicode ? "⚠" : "[!]",
+      info: hasUnicode ? "ℹ" : "[i]",
+      loading: hasUnicode ? "…" : "...",
+      stale: hasUnicode ? "⟳" : "[stale]",
+      arrow: hasUnicode ? "→" : "->",
+      bullet: hasUnicode ? "•" : "-",
+      locked: hasUnicode ? "🔒" : "[L]",
+      unlocked: hasUnicode ? "🔓" : "[U]",
+      web: hasUnicode ? "🌐" : "[web]",
+      billable: hasUnicode ? "$" : "[$]",
+      destructive: hasUnicode ? "⚠" : "[!!]",
     },
     labels: {
-      readOnly: 'read-only',
-      mutating: 'mutating',
-      destructive: 'destructive',
-      billable: 'billable',
-      webOnly: 'Not available in Porkbun API v3',
-      stale: 'stale',
-      error: 'error',
-      selected: 'selected',
+      readOnly: "read-only",
+      mutating: "mutating",
+      destructive: "destructive",
+      billable: "billable",
+      webOnly: "Not available in Porkbun API v3",
+      stale: "stale",
+      error: "error",
+      selected: "selected",
     },
   };
 }

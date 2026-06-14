@@ -2,11 +2,12 @@
  * MutationConfirm - confirmation component for mutations
  * Shows the review snapshot and handles confirmation input
  */
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
-import type { Theme } from '../theme.js';
-import type { ReviewSnapshot, ConfirmationLevel } from '../types.js';
+import React, { useState } from "react";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
+import TextInput from "ink-text-input";
+import type { Theme } from "../theme.js";
+import type { ReviewSnapshot, ConfirmationLevel } from "../types.js";
 
 interface MutationConfirmProps {
   theme: Theme;
@@ -15,7 +16,7 @@ interface MutationConfirmProps {
   onConfirm: () => void;
   onBack: () => void;
   onCancel: () => void;
-  submitting?: boolean;
+  submitting?: boolean | undefined;
 }
 
 export function MutationConfirm({
@@ -27,19 +28,18 @@ export function MutationConfirm({
   onCancel,
   submitting = false,
 }: MutationConfirmProps) {
-  const [confirmInput, setConfirmInput] = useState('');
+  const [confirmInput, setConfirmInput] = useState("");
   const [error] = useState<string | null>(null);
 
   const requiresTextConfirmation =
-    confirmationLevel === 'billable' ||
-    confirmationLevel === 'bulk-disruptive';
+    confirmationLevel === "billable" || confirmationLevel === "bulk-disruptive";
 
   const expectedText =
-    confirmationLevel === 'billable'
+    confirmationLevel === "billable"
       ? review.target
-      : confirmationLevel === 'bulk-disruptive'
-      ? review.fields.find(f => f.label === 'Domain count')?.value || ''
-      : '';
+      : confirmationLevel === "bulk-disruptive"
+        ? review.fields.find((f) => f.label === "Domain count")?.value || ""
+        : "";
 
   const canConfirm = !requiresTextConfirmation || confirmInput === expectedText;
 
@@ -51,7 +51,7 @@ export function MutationConfirm({
       return;
     }
 
-    if (input === 'b' || input === 'B') {
+    if (input === "b" || input === "B") {
       onBack();
       return;
     }
@@ -82,12 +82,17 @@ export function MutationConfirm({
 
       <Box marginBottom={1}>
         <Text>Classification: </Text>
-        <Text color={
-          review.classification === 'billable' ? theme.colors.danger :
-          review.classification === 'destructive' ? theme.colors.danger :
-          review.classification === 'mutating' ? theme.colors.warning :
-          theme.colors.info
-        }>
+        <Text
+          color={
+            review.classification === "billable"
+              ? theme.colors.danger
+              : review.classification === "destructive"
+                ? theme.colors.danger
+                : review.classification === "mutating"
+                  ? theme.colors.warning
+                  : theme.colors.info
+          }
+        >
           {review.classification.toUpperCase()}
         </Text>
       </Box>
@@ -99,7 +104,7 @@ export function MutationConfirm({
             <Box key={idx} marginLeft={2}>
               <Text>{field.label}: </Text>
               <Text color={field.sensitive ? theme.colors.muted : undefined}>
-                {field.sensitive ? '••••••' : field.value}
+                {field.sensitive ? "••••••" : field.value}
               </Text>
             </Box>
           ))}
@@ -114,15 +119,9 @@ export function MutationConfirm({
 
       {requiresTextConfirmation && (
         <Box flexDirection="column" marginBottom={1}>
-          <Text color={theme.colors.warning}>
-            Type "{expectedText}" to confirm:
-          </Text>
+          <Text color={theme.colors.warning}>Type "{expectedText}" to confirm:</Text>
           <Box marginTop={1}>
-            <TextInput
-              value={confirmInput}
-              onChange={setConfirmInput}
-              placeholder={expectedText}
-            />
+            <TextInput value={confirmInput} onChange={setConfirmInput} placeholder={expectedText} />
           </Box>
           {error && (
             <Box marginTop={1}>
@@ -134,9 +133,7 @@ export function MutationConfirm({
 
       <Box marginTop={1}>
         <Text dimColor>
-          {submitting
-            ? 'Submitting...'
-            : `[Enter] Confirm | [b] Back to edit | [Esc] Cancel`}
+          {submitting ? "Submitting..." : `[Enter] Confirm | [b] Back to edit | [Esc] Cancel`}
         </Text>
       </Box>
     </Box>

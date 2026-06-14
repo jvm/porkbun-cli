@@ -7,14 +7,14 @@ export interface NormalizedDomain {
   domain: string;
   status: string;
   tld: string;
-  createDate?: string;
-  expireDate?: string;
+  createDate?: string | undefined;
+  expireDate?: string | undefined;
   securityLock: boolean;
   whoisPrivacy: boolean;
   autoRenew: boolean;
   apiAccess: boolean;
   notLocal: boolean;
-  labels?: string[];
+  labels?: string[] | undefined;
   raw: Record<string, unknown>;
 }
 
@@ -23,9 +23,9 @@ export interface NormalizedDnsRecord {
   name: string;
   type: string;
   content: string;
-  ttl?: number;
-  prio?: number;
-  notes?: string;
+  ttl?: number | undefined;
+  prio?: number | undefined;
+  notes?: string | undefined;
   raw: Record<string, unknown>;
 }
 
@@ -42,7 +42,7 @@ export interface NormalizedForward {
   id: string;
   subdomain: string;
   location: string;
-  type: 'permanent' | 'temporary';
+  type: "permanent" | "temporary";
   includePath: boolean;
   wildcard: boolean;
   raw: Record<string, unknown>;
@@ -53,20 +53,20 @@ export interface NormalizedDnssecRecord {
   alg: number;
   digestType: number;
   digest: string;
-  maxSigLife?: number;
-  keyDataFlags?: number;
-  keyDataProtocol?: number;
-  keyDataAlgo?: number;
-  keyDataPubKey?: string;
+  maxSigLife?: number | undefined;
+  keyDataFlags?: number | undefined;
+  keyDataProtocol?: number | undefined;
+  keyDataAlgo?: number | undefined;
+  keyDataPubKey?: string | undefined;
   raw: Record<string, unknown>;
 }
 
 export interface NormalizedTransfer {
   domain: string;
   status: string;
-  statusDescription?: string;
-  transferDate?: string;
-  orderId?: string;
+  statusDescription?: string | undefined;
+  transferDate?: string | undefined;
+  orderId?: string | undefined;
   raw: Record<string, unknown>;
 }
 
@@ -77,73 +77,73 @@ export interface NormalizedAccountBalance {
 }
 
 export interface NormalizedApiSettings {
-  monthlySpendCents?: number;
+  monthlySpendCents?: number | undefined;
   settings: Record<string, unknown>;
   raw: Record<string, unknown>;
 }
 
 export interface NormalizedSslBundle {
-  certificateChain?: string;
-  publicKey?: string;
-  privateKey?: string;
+  certificateChain?: string | undefined;
+  publicKey?: string | undefined;
+  privateKey?: string | undefined;
   raw: Record<string, unknown>;
 }
 
-export type ResourceStatus = 'idle' | 'loading' | 'loaded' | 'stale' | 'error';
+export type ResourceStatus = "idle" | "loading" | "loaded" | "stale" | "error";
 
 export interface ResourceState<T> {
   status: ResourceStatus;
-  data?: T;
-  error?: Error;
-  timestamp?: number;
-  requestId?: string;
-  retryable?: boolean;
-  stale?: boolean;
+  data?: T | undefined;
+  error?: Error | undefined;
+  timestamp?: number | undefined;
+  requestId?: string | undefined;
+  retryable?: boolean | undefined;
+  stale?: boolean | undefined;
 }
 
 export interface DomainQuery {
-  start?: number;
-  includeLabels?: boolean;
-  domain?: string;
-  nameContains?: string;
-  expiringWithinDays?: number;
-  tlds?: string[];
-  autoRenew?: boolean;
-  apiAccess?: boolean;
-  sortName?: string;
-  sortDirection?: 'asc' | 'desc';
+  start?: number | undefined;
+  includeLabels?: boolean | undefined;
+  domain?: string | undefined;
+  nameContains?: string | undefined;
+  expiringWithinDays?: number | undefined;
+  tlds?: string[] | undefined;
+  autoRenew?: boolean | undefined;
+  apiAccess?: boolean | undefined;
+  sortName?: string | undefined;
+  sortDirection?: "asc" | "desc" | undefined;
 }
 
 export interface DomainSelection {
-  type: 'none' | 'single' | 'multiple' | 'visible-page' | 'all-filter';
+  type: "none" | "single" | "multiple" | "visible-page" | "all-filter";
   domains: string[];
-  filterDescriptor?: string;
+  filterDescriptor?: string | undefined;
   count: number;
 }
 
-export type ConfirmationLevel = 'standard' | 'disruptive' | 'bulk-disruptive' | 'billable';
+export type ConfirmationLevel = "standard" | "disruptive" | "bulk-disruptive" | "billable";
 
 export interface OperationContext {
   confirmationLevel: ConfirmationLevel;
-  idempotencyKey?: string;
+  idempotencyKey?: string | undefined;
   inFlight: boolean;
-  requestId?: string;
-  result?: OperationResult;
+  requestId?: string | undefined;
+  result?: OperationResult | undefined;
 }
 
 export interface OperationResult {
   success: boolean;
   message: string;
   data?: unknown;
-  error?: Error;
-  requestId?: string;
+  error?: Error | undefined;
+  requestId?: string | undefined;
 }
 
 export interface FormField<T = string> {
   value: T;
-  error?: string;
+  error?: string | undefined;
   touched: boolean;
-  sensitive?: boolean;
+  sensitive?: boolean | undefined;
 }
 
 export interface FormState<T extends Record<string, unknown> = Record<string, unknown>> {
@@ -152,16 +152,16 @@ export interface FormState<T extends Record<string, unknown> = Record<string, un
   touched: Partial<Record<keyof T, boolean>>;
   dirty: boolean;
   submitting: boolean;
-  reviewSnapshot?: ReviewSnapshot;
+  reviewSnapshot?: ReviewSnapshot | undefined;
 }
 
 export interface ReviewSnapshot {
   operation: string;
   target: string;
-  classification: 'read-only' | 'mutating' | 'destructive' | 'billable';
-  fields: Array<{ label: string; value: string; sensitive?: boolean }>;
-  idempotencyKey?: string;
-  expectedInvalidations?: string[];
+  classification: "read-only" | "mutating" | "destructive" | "billable";
+  fields: Array<{ label: string; value: string; sensitive?: boolean | undefined }>;
+  idempotencyKey?: string | undefined;
+  expectedInvalidations?: string[] | undefined;
 }
 
 export interface BulkOperationState {
@@ -174,9 +174,9 @@ export interface BulkOperationState {
 }
 
 export interface BulkDomainResult {
-  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'skipped' | 'cancelled';
-  error?: Error;
-  requestId?: string;
+  status: "pending" | "running" | "succeeded" | "failed" | "skipped" | "cancelled";
+  error?: Error | undefined;
+  requestId?: string | undefined;
 }
 
 export interface TerminalCapabilities {
@@ -184,14 +184,14 @@ export interface TerminalCapabilities {
   rows: number;
   color: boolean;
   unicode: boolean;
-  mouse?: boolean;
+  mouse?: boolean | undefined;
 }
 
-export type Breakpoint = 'wide' | 'medium' | 'compact' | 'minimum';
+export type Breakpoint = "wide" | "medium" | "compact" | "minimum";
 
 export function getBreakpoint(cols: number, rows: number): Breakpoint {
-  if (cols < 60 || rows < 18) return 'minimum';
-  if (cols < 80) return 'compact';
-  if (cols < 120) return 'medium';
-  return 'wide';
+  if (cols < 60 || rows < 18) return "minimum";
+  if (cols < 80) return "compact";
+  if (cols < 120) return "medium";
+  return "wide";
 }
