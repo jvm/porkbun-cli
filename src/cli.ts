@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
+import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createInterface } from "node:readline/promises";
 import { Command, CommanderError, InvalidArgumentError } from "commander";
@@ -16,6 +17,7 @@ import {
   type CommandOptionDefinition,
   type OperationInvocation
 } from "./commands/definitions.js";
+import { launchTui } from "./tui/index.js";
 
 const VERSION = "0.1.1";
 
@@ -40,7 +42,7 @@ export function buildProgram(): Command {
   const program = new Command();
   program
     .name("porkbun")
-    .description("Agent-friendly CLI for the Porkbun API v3.")
+    .description("Agent-friendly CLI for the Porkbun API v3. Bare interactive invocation launches the TUI.")
     .version(VERSION)
     .showHelpAfterError(false)
     .exitOverride()
@@ -51,6 +53,8 @@ export function buildProgram(): Command {
   registerAuthCommands(program);
   registerApiCommands(program);
   registerSchemaCommand(program);
+  registerTuiCommand(program);
+  registerRootAction(program);
 
   return program;
 }
@@ -243,6 +247,77 @@ function registerSchemaCommand(program: Command): void {
     .action((commandPath?: string) => {
       process.stdout.write(`${JSON.stringify(buildCliSchema(commandPath))}\n`);
     });
+}
+
+function registerTuiCommand(program: Command): void {
+  const tui = new Command("tui")
+    .description("Launch the interactive terminal user interface (TUI). Requires a TTY.")
+    .action(async () => {
+      const global = program.opts<Record<string, unknown>>();
+      rejectTuiIncompatibleOptions(global);
+      if (!process.stdin.isTTY || !process.stdout.isTTY) {
+        throw new CliError({
+          kind: "usage",
+          message: "porkbun tui requires an interactive terminal (TTY). Use named commands for non-interactive usage."
+        });
+      }
+      await launchTui({
+        apiKey: stringOption(global.apiKey),
+        secretApiKey: stringOption(global.secretApiKey),
+        profile: stringOption(global.profile),
+        baseUrl: stringOption(global.baseUrl),
+        ipv4: Boolean(global.ipv4),
+        timeout: numberOption(global.timeout),
+        verbose: Boolean(global.verbose),
+        noColor: Boolean(global.color) === false
+      });
+    });
+
+  program.addCommand(tui);
+}
+
+function registerRootAction(program: Command): void {
+  program.action(async () => {
+    const global = program.opts<Record<string, unknown>>();
+    rejectTuiIncompatibleOptions(global);
+
+    if (process.stdin.isTTY && process.stdout.isTTY) {
+      await launchTui({
+        apiKey: stringOption(global.apiKey),
+        secretApiKey: stringOption(global.secretApiKey),
+        profile: stringOption(global.profile),
+        baseUrl: stringOption(global.baseUrl),
+        ipv4: Boolean(global.ipv4),
+        timeout: numberOption(global.timeout),
+        verbose: Boolean(global.verbose),
+        noColor: Boolean(global.color) === false
+      });
+    } else {
+      // Non-TTY: print concise help, exit successfully
+      process.stdout.write(`${program.helpInformation()}\n`);
+    }
+  });
+}
+
+const TUI_INCOMPATIBLE_OPTIONS = ["output", "fields", "limit", "offset", "dryRun", "yes", "idempotencyKey", "freshIdempotencyKey"] as const;
+
+function rejectTuiIncompatibleOptions(global: Record<string, unknown>): void {
+  for (const key of TUI_INCOMPATIBLE_OPTIONS) {
+    const value = global[key];
+    // Only reject if the value was explicitly provided (not default)
+    if (value !== undefined && value !== false && value !== "auto") {
+      // Check if it's a default value
+      if (key === "output" && value === "auto") continue;
+      throw new CliError({
+        kind: "usage",
+        message: `Option --${camelToKebab(key)} is not compatible with the interactive TUI.`
+      });
+    }
+  }
+}
+
+function camelToKebab(str: string): string {
+  return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
 }
 
 async function executeInvocation(program: Command, invocation: OperationInvocation): Promise<void> {
@@ -454,6 +529,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+const entryPath = process.argv[1] ? pathToFileURL(realpathSync(process.argv[1])).href : "";
+if (import.meta.url === entryPath) {
   await run();
 }

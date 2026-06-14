@@ -19,6 +19,7 @@ export interface OperationRequest {
   dryRun?: boolean;
   idempotencyKey?: string;
   freshIdempotencyKey?: boolean;
+  signal?: AbortSignal;
 }
 
 export interface DryRunResult {
@@ -99,12 +100,16 @@ export class ApiClient {
 
     let response: Response;
     try {
+      const timeoutSignal = AbortSignal.timeout(this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+      const signal = request.signal
+        ? AbortSignal.any([timeoutSignal, request.signal])
+        : timeoutSignal;
       response = await (this.options.fetch ?? globalThis.fetch)(url, {
         method,
         headers,
         body: method === "POST" ? JSON.stringify(requestBody ?? {}) : undefined,
         redirect: "error",
-        signal: AbortSignal.timeout(this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS)
+        signal
       });
     } catch (error) {
       const timeout =

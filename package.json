@@ -43,12 +43,17 @@
   },
   "dependencies": {
     "commander": "^15.0.0",
-    "yaml": "^2.8.2"
+    "ink": "^7.0.6",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^19.2.7",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.2",
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
     "typescript": "^6.0.3",
-    "undici": "^8.4.0"
+    "undici": "^8.4.1"
   },
   "publishConfig": {
     "access": "public"

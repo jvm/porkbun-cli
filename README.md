@@ -34,6 +34,47 @@ porkbun auth whoami -o json
 
 The login command prompts for credentials on an interactive TTY. Profiles are stored in the XDG config directory with `0600` permissions. Avoid passing secrets as command-line flags because they may be retained in shell history or exposed through process listings. Explicit flags override env vars, and env vars override profiles.
 
+## Interactive TUI
+
+Run `porkbun` without arguments in an interactive terminal to launch the TUI:
+
+```sh
+porkbun
+```
+
+The TUI provides a keyboard-driven interface for managing your Porkbun domain portfolio. If stdin or stdout is not a TTY, `porkbun` prints help and exits (use subcommands for scripting).
+
+### Navigation
+
+- **↑/↓** or **j/k**: Navigate lists
+- **Enter**: Open item or submit form
+- **Esc** or **q**: Go back or cancel
+- **Tab** / **Shift+Tab**: Move between fields
+- **Space**: Toggle selection
+- **/**: Search
+- **r**: Refresh current view
+- **Ctrl+C**: Quit
+
+### TUI Features
+
+The TUI supports:
+- Domain portfolio browsing with search, filter, and sort
+- DNS record management (create, edit, delete)
+- Nameserver updates
+- Glue record management
+- URL forward management
+- DNSSEC record management
+- SSL certificate bundle retrieval and secure export
+- Auto-renew toggles (single or bulk)
+- Domain registration, renewal, and transfers
+- Account balance and settings
+
+All mutations require review and confirmation. Billable operations (registration, renewal, transfer) require typing the domain name to confirm.
+
+### SSL Export
+
+When viewing an SSL certificate bundle in the TUI, press `e` to export the certificate chain, private key, and public key to a secure directory. The private key is written with `0600` permissions.
+
 ## Agent Contract
 
 - Data is written to stdout.
