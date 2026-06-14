@@ -9,11 +9,10 @@ import { configFileMode, configPath, deleteProfile, listProfiles, resolveCredent
 import { CliError, errorEnvelope } from "./lib/errors.js";
 import { normalizeForOutput, render } from "./lib/output.js";
 import { buildCliSchema } from "./lib/schema.js";
-import { OPERATIONS, OPERATIONS_BY_ID, requireOperation, type OperationDefinition } from "./lib/operations.js";
+import { OPERATIONS_BY_ID, requireOperation, type OperationDefinition } from "./lib/operations.js";
 import {
   CLI_COMMANDS,
   defaultInvocation,
-  type CliCommandDefinition,
   type CommandOptionDefinition,
   type OperationInvocation
 } from "./commands/definitions.js";
