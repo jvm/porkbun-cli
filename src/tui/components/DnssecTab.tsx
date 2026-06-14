@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import type { NormalizedDnssecRecord } from '../types.js';
-import type { Theme } from '../theme.js';
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
+import type { NormalizedDnssecRecord } from "../types.js";
+import type { Theme } from "../theme.js";
 
 export interface DnssecTabProps {
   records: NormalizedDnssecRecord[];
@@ -14,12 +14,12 @@ export function DnssecTab({ records, theme, onCreate, onDelete }: DnssecTabProps
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useInput((input, key) => {
-    if (input === 'n') {
+    if (input === "n") {
       onCreate();
       return;
     }
 
-    if (input === 'd' && records.at(selectedIndex)) {
+    if (input === "d" && records.at(selectedIndex)) {
       onDelete(records.at(selectedIndex)!);
       return;
     }
@@ -47,7 +47,7 @@ export function DnssecTab({ records, theme, onCreate, onDelete }: DnssecTabProps
         {records.map((record, idx) => (
           <Box key={record.keyTag}>
             <Text color={idx === selectedIndex ? theme.colors.primary : undefined}>
-              {idx === selectedIndex ? '▶ ' : '  '}
+              {idx === selectedIndex ? "▶ " : "  "}
               Key Tag: {record.keyTag} | Alg: {record.alg} | Digest Type: {record.digestType}
             </Text>
           </Box>

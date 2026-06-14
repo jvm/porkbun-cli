@@ -1,7 +1,7 @@
 /**
  * TUI theme - color/no-color/icon choices and semantic labels.
  */
-import type { TerminalCapabilities } from './types.js';
+import type { TerminalCapabilities } from "./types.js";
 
 export interface Theme {
   // Colors (undefined when no-color)
@@ -53,42 +53,42 @@ export function createTheme(caps: TerminalCapabilities): Theme {
 
   return {
     colors: {
-      primary: hasColor ? 'cyan' : undefined,
-      secondary: hasColor ? 'blue' : undefined,
-      success: hasColor ? 'green' : undefined,
-      warning: hasColor ? 'yellow' : undefined,
-      danger: hasColor ? 'red' : undefined,
-      info: hasColor ? 'blue' : undefined,
+      primary: hasColor ? "cyan" : undefined,
+      secondary: hasColor ? "blue" : undefined,
+      success: hasColor ? "green" : undefined,
+      warning: hasColor ? "yellow" : undefined,
+      danger: hasColor ? "red" : undefined,
+      info: hasColor ? "blue" : undefined,
       muted: hasColor ? undefined : undefined,
-      selected: hasColor ? 'white' : undefined,
-      selectedBg: hasColor ? 'cyan' : undefined,
+      selected: hasColor ? "white" : undefined,
+      selectedBg: hasColor ? "cyan" : undefined,
     },
     icons: {
-      selected: hasUnicode ? '▸' : '>',
-      unselected: ' ',
-      check: hasUnicode ? '✓' : '[OK]',
-      cross: hasUnicode ? '✗' : '[X]',
-      warning: hasUnicode ? '⚠' : '[!]',
-      info: hasUnicode ? 'ℹ' : '[i]',
-      loading: hasUnicode ? '…' : '...',
-      stale: hasUnicode ? '⟳' : '[stale]',
-      arrow: hasUnicode ? '→' : '->',
-      bullet: hasUnicode ? '•' : '-',
-      locked: hasUnicode ? '🔒' : '[L]',
-      unlocked: hasUnicode ? '🔓' : '[U]',
-      web: hasUnicode ? '🌐' : '[web]',
-      billable: hasUnicode ? '$' : '[$]',
-      destructive: hasUnicode ? '⚠' : '[!!]',
+      selected: hasUnicode ? "▸" : ">",
+      unselected: " ",
+      check: hasUnicode ? "✓" : "[OK]",
+      cross: hasUnicode ? "✗" : "[X]",
+      warning: hasUnicode ? "⚠" : "[!]",
+      info: hasUnicode ? "ℹ" : "[i]",
+      loading: hasUnicode ? "…" : "...",
+      stale: hasUnicode ? "⟳" : "[stale]",
+      arrow: hasUnicode ? "→" : "->",
+      bullet: hasUnicode ? "•" : "-",
+      locked: hasUnicode ? "🔒" : "[L]",
+      unlocked: hasUnicode ? "🔓" : "[U]",
+      web: hasUnicode ? "🌐" : "[web]",
+      billable: hasUnicode ? "$" : "[$]",
+      destructive: hasUnicode ? "⚠" : "[!!]",
     },
     labels: {
-      readOnly: 'read-only',
-      mutating: 'mutating',
-      destructive: 'destructive',
-      billable: 'billable',
-      webOnly: 'Not available in Porkbun API v3',
-      stale: 'stale',
-      error: 'error',
-      selected: 'selected',
+      readOnly: "read-only",
+      mutating: "mutating",
+      destructive: "destructive",
+      billable: "billable",
+      webOnly: "Not available in Porkbun API v3",
+      stale: "stale",
+      error: "error",
+      selected: "selected",
     },
   };
 }

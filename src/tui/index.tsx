@@ -1,15 +1,15 @@
 /**
  * TUI entry point - TTY checks, terminal lifecycle, Ink render/unmount.
  */
-import { render } from 'ink';
-import React from 'react';
-import { CliError } from '../lib/errors.js';
-import { ApiClient } from '../lib/api-client.js';
-import { resolveCredentials } from '../lib/config.js';
-import { TuiApiService } from './services/api.js';
-import { createTheme } from './theme.js';
-import { App } from './app.js';
-import type { TerminalCapabilities } from './types.js';
+import { render } from "ink";
+import React from "react";
+import { CliError } from "../lib/errors.js";
+import { ApiClient } from "../lib/api-client.js";
+import { resolveCredentials } from "../lib/config.js";
+import { TuiApiService } from "./services/api.js";
+import { createTheme } from "./theme.js";
+import { App } from "./app.js";
+import type { TerminalCapabilities } from "./types.js";
 
 export interface LaunchTuiOptions {
   apiKey?: string;
@@ -30,8 +30,9 @@ export async function launchTui(options: LaunchTuiOptions = {}): Promise<void> {
   // TTY validation
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new CliError({
-      kind: 'usage',
-      message: 'The TUI requires an interactive terminal (TTY). Use named commands for non-interactive usage.',
+      kind: "usage",
+      message:
+        "The TUI requires an interactive terminal (TTY). Use named commands for non-interactive usage.",
     });
   }
 
@@ -40,19 +41,19 @@ export async function launchTui(options: LaunchTuiOptions = {}): Promise<void> {
     columns: process.stdout.columns || 80,
     rows: process.stdout.rows || 24,
     color: !options.noColor && !process.env.NO_COLOR && process.stdout.hasColors?.() !== false,
-    unicode: !process.env.NO_UNICODE && process.platform !== 'win32',
+    unicode: !process.env.NO_UNICODE && process.platform !== "win32",
   };
 
   // Resolve credential source for display
-  let credentialSource: 'flags' | 'env' | 'profile' | undefined;
+  let credentialSource: "flags" | "env" | "profile" | undefined;
   let profileName: string | undefined;
 
   if (options.apiKey || options.secretApiKey) {
-    credentialSource = 'flags';
+    credentialSource = "flags";
   } else if (process.env.PORKBUN_API_KEY || process.env.PORKBUN_SECRET_API_KEY) {
-    credentialSource = 'env';
+    credentialSource = "env";
   } else {
-    credentialSource = 'profile';
+    credentialSource = "profile";
     const creds = await resolveCredentials({ profile: options.profile }, false);
     profileName = creds?.profile;
   }
@@ -75,7 +76,7 @@ export async function launchTui(options: LaunchTuiOptions = {}): Promise<void> {
   const theme = createTheme(terminal);
 
   // Enter alternate screen
-  process.stdout.write('\x1B[?1049h');
+  process.stdout.write("\x1B[?1049h");
 
   // Setup cleanup handlers
   let cleanedUp = false;
@@ -83,11 +84,11 @@ export async function launchTui(options: LaunchTuiOptions = {}): Promise<void> {
     if (cleanedUp) return;
     cleanedUp = true;
     // Exit alternate screen
-    process.stdout.write('\x1B[?1049l');
+    process.stdout.write("\x1B[?1049l");
     // Restore cursor
-    process.stdout.write('\x1B[?25h');
+    process.stdout.write("\x1B[?25h");
     // Reset terminal state
-    process.stdout.write('\x1B[0m');
+    process.stdout.write("\x1B[0m");
   };
 
   // Handle Ctrl+C, uncaught errors, and normal exit
@@ -102,9 +103,9 @@ export async function launchTui(options: LaunchTuiOptions = {}): Promise<void> {
     process.exit(1);
   };
 
-  process.on('SIGINT', handleSignal);
-  process.on('uncaughtException', handleUncaughtException);
-  process.on('exit', cleanup);
+  process.on("SIGINT", handleSignal);
+  process.on("uncaughtException", handleUncaughtException);
+  process.on("exit", cleanup);
 
   try {
     // Render the app
@@ -120,7 +121,7 @@ export async function launchTui(options: LaunchTuiOptions = {}): Promise<void> {
         stdout: process.stdout,
         stdin: process.stdin,
         exitOnCtrlC: true,
-      }
+      },
     );
 
     await waitUntilExit();
@@ -131,13 +132,13 @@ export async function launchTui(options: LaunchTuiOptions = {}): Promise<void> {
       throw err;
     }
     throw new CliError({
-      kind: 'api_error',
+      kind: "api_error",
       message: `TUI failed to start: ${err instanceof Error ? err.message : String(err)}`,
     });
   } finally {
     cleanup();
-    process.removeListener('SIGINT', handleSignal);
-    process.removeListener('uncaughtException', handleUncaughtException);
-    process.removeListener('exit', cleanup);
+    process.removeListener("SIGINT", handleSignal);
+    process.removeListener("uncaughtException", handleUncaughtException);
+    process.removeListener("exit", cleanup);
   }
 }

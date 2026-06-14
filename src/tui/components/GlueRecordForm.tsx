@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
-import type { NormalizedGlueRecord } from '../types.js';
-import type { Theme } from '../theme.js';
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
+import type { NormalizedGlueRecord } from "../types.js";
+import type { Theme } from "../theme.js";
 
 export interface GlueRecordFormProps {
   theme: Theme;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   initialRecord?: NormalizedGlueRecord;
   // When the user returns to the form from the confirmation step ('b'),
   // re-seed it from these values so the in-progress edits are not lost.
@@ -15,13 +15,20 @@ export interface GlueRecordFormProps {
   onCancel: () => void;
 }
 
-export function GlueRecordForm({ theme, mode, initialRecord, initialValues, onSubmit, onCancel }: GlueRecordFormProps) {
-  const seedHostname = initialValues?.hostname ?? initialRecord?.subdomain ?? '';
-  const seedIpsText = initialValues?.ips?.join(', ') ?? initialRecord?.ips.join(', ') ?? '';
+export function GlueRecordForm({
+  theme,
+  mode,
+  initialRecord,
+  initialValues,
+  onSubmit,
+  onCancel,
+}: GlueRecordFormProps) {
+  const seedHostname = initialValues?.hostname ?? initialRecord?.subdomain ?? "";
+  const seedIpsText = initialValues?.ips?.join(", ") ?? initialRecord?.ips.join(", ") ?? "";
   const [hostname, setHostname] = useState(seedHostname);
   const [ipsText, setIpsText] = useState(seedIpsText);
   const [focusedField, setFocusedField] = useState(0);
-  const isEdit = mode === 'edit';
+  const isEdit = mode === "edit";
 
   useInput((input, key) => {
     if (key.escape) {
@@ -35,7 +42,10 @@ export function GlueRecordForm({ theme, mode, initialRecord, initialValues, onSu
     }
 
     if (key.return) {
-      const ips = ipsText.split(',').map((ip) => ip.trim()).filter(Boolean);
+      const ips = ipsText
+        .split(",")
+        .map((ip) => ip.trim())
+        .filter(Boolean);
       if (hostname && ips.length > 0) {
         onSubmit({ hostname, ips });
       }
@@ -44,20 +54,20 @@ export function GlueRecordForm({ theme, mode, initialRecord, initialValues, onSu
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold>{isEdit ? 'Edit' : 'Create'} Glue Record</Text>
+      <Text bold>{isEdit ? "Edit" : "Create"} Glue Record</Text>
       <Box marginTop={1}>
         <Text color={focusedField === 0 && !isEdit ? theme.colors.primary : undefined}>
-          Hostname:{' '}
+          Hostname:{" "}
         </Text>
         {focusedField === 0 && !isEdit ? (
           <TextInput value={hostname} onChange={setHostname} />
         ) : (
-          <Text>{hostname || '(root)'}</Text>
+          <Text>{hostname || "(root)"}</Text>
         )}
       </Box>
       <Box marginTop={1}>
-        <Text color={(focusedField === 1 || isEdit) ? theme.colors.primary : undefined}>
-          IPs (comma-separated):{' '}
+        <Text color={focusedField === 1 || isEdit ? theme.colors.primary : undefined}>
+          IPs (comma-separated):{" "}
         </Text>
         {focusedField === 1 || isEdit ? (
           <TextInput value={ipsText} onChange={setIpsText} />

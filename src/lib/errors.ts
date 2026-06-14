@@ -5,7 +5,7 @@ export const EXIT_CODES = {
   conflict: 4,
   rateLimit: 5,
   network: 6,
-  api: 7
+  api: 7,
 } as const;
 
 export type ErrorKind =
@@ -97,8 +97,8 @@ export function errorEnvelope(error: unknown): { error: Record<string, unknown> 
         message: error.message,
         requestId: error.requestId,
         retryable: error.retryable,
-        details: error.details
-      })
+        details: error.details,
+      }),
     };
   }
 
@@ -106,13 +106,11 @@ export function errorEnvelope(error: unknown): { error: Record<string, unknown> 
     error: {
       kind: "api_error",
       message: error instanceof Error ? error.message : String(error),
-      retryable: false
-    }
+      retryable: false,
+    },
   };
 }
 
 function cleanObject<T extends Record<string, unknown>>(value: T): T {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined)
-  ) as T;
+  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as T;
 }

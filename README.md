@@ -58,6 +58,7 @@ The TUI provides a keyboard-driven interface for managing your Porkbun domain po
 ### TUI Features
 
 The TUI supports:
+
 - Domain portfolio browsing with search, filter, and sort
 - DNS record management (create, edit, delete)
 - Nameserver updates

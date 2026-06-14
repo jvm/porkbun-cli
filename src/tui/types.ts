@@ -42,7 +42,7 @@ export interface NormalizedForward {
   id: string;
   subdomain: string;
   location: string;
-  type: 'permanent' | 'temporary';
+  type: "permanent" | "temporary";
   includePath: boolean;
   wildcard: boolean;
   raw: Record<string, unknown>;
@@ -89,7 +89,7 @@ export interface NormalizedSslBundle {
   raw: Record<string, unknown>;
 }
 
-export type ResourceStatus = 'idle' | 'loading' | 'loaded' | 'stale' | 'error';
+export type ResourceStatus = "idle" | "loading" | "loaded" | "stale" | "error";
 
 export interface ResourceState<T> {
   status: ResourceStatus;
@@ -111,17 +111,17 @@ export interface DomainQuery {
   autoRenew?: boolean;
   apiAccess?: boolean;
   sortName?: string;
-  sortDirection?: 'asc' | 'desc';
+  sortDirection?: "asc" | "desc";
 }
 
 export interface DomainSelection {
-  type: 'none' | 'single' | 'multiple' | 'visible-page' | 'all-filter';
+  type: "none" | "single" | "multiple" | "visible-page" | "all-filter";
   domains: string[];
   filterDescriptor?: string;
   count: number;
 }
 
-export type ConfirmationLevel = 'standard' | 'disruptive' | 'bulk-disruptive' | 'billable';
+export type ConfirmationLevel = "standard" | "disruptive" | "bulk-disruptive" | "billable";
 
 export interface OperationContext {
   confirmationLevel: ConfirmationLevel;
@@ -158,7 +158,7 @@ export interface FormState<T extends Record<string, unknown> = Record<string, un
 export interface ReviewSnapshot {
   operation: string;
   target: string;
-  classification: 'read-only' | 'mutating' | 'destructive' | 'billable';
+  classification: "read-only" | "mutating" | "destructive" | "billable";
   fields: Array<{ label: string; value: string; sensitive?: boolean }>;
   idempotencyKey?: string;
   expectedInvalidations?: string[];
@@ -174,7 +174,7 @@ export interface BulkOperationState {
 }
 
 export interface BulkDomainResult {
-  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'skipped' | 'cancelled';
+  status: "pending" | "running" | "succeeded" | "failed" | "skipped" | "cancelled";
   error?: Error;
   requestId?: string;
 }
@@ -187,11 +187,11 @@ export interface TerminalCapabilities {
   mouse?: boolean;
 }
 
-export type Breakpoint = 'wide' | 'medium' | 'compact' | 'minimum';
+export type Breakpoint = "wide" | "medium" | "compact" | "minimum";
 
 export function getBreakpoint(cols: number, rows: number): Breakpoint {
-  if (cols < 60 || rows < 18) return 'minimum';
-  if (cols < 80) return 'compact';
-  if (cols < 120) return 'medium';
-  return 'wide';
+  if (cols < 60 || rows < 18) return "minimum";
+  if (cols < 80) return "compact";
+  if (cols < 120) return "medium";
+  return "wide";
 }

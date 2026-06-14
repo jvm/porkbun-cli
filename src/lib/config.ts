@@ -52,7 +52,7 @@ export async function readConfig(): Promise<ConfigFile> {
     throw new CliError({
       kind: "usage",
       message: `Failed to read config file at ${path}`,
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 }
@@ -85,7 +85,7 @@ export async function saveProfile(
   profileName: string,
   apiKey: string,
   secretApiKey: string,
-  makeActive = true
+  makeActive = true,
 ): Promise<ConfigFile> {
   const name = validateProfileName(profileName || DEFAULT_PROFILE);
   const config = await readConfig();
@@ -95,7 +95,7 @@ export async function saveProfile(
     apiKey,
     secretApiKey,
     createdAt: existing?.createdAt ?? now,
-    updatedAt: now
+    updatedAt: now,
   });
   if (makeActive) config.activeProfile = name;
   await writeConfig(config);
@@ -113,18 +113,20 @@ export async function deleteProfile(profileName: string): Promise<ConfigFile> {
   return config;
 }
 
-export async function listProfiles(): Promise<Array<{ name: string; active: boolean; updatedAt: string }>> {
+export async function listProfiles(): Promise<
+  Array<{ name: string; active: boolean; updatedAt: string }>
+> {
   const config = await readConfig();
   return Array.from(config.profiles, ([name, profile]) => ({
     name,
     active: name === config.activeProfile,
-    updatedAt: profile.updatedAt
+    updatedAt: profile.updatedAt,
   }));
 }
 
 export async function resolveCredentials(
   input: CredentialInput,
-  required: boolean
+  required: boolean,
 ): Promise<Credentials | undefined> {
   const env = input.env ?? process.env;
 
@@ -132,13 +134,13 @@ export async function resolveCredentials(
     if (!input.apiKey || !input.secretApiKey) {
       throw new CliError({
         kind: "auth",
-        message: "Both --api-key and --secret-api-key are required when either is supplied."
+        message: "Both --api-key and --secret-api-key are required when either is supplied.",
       });
     }
     return {
       apiKey: input.apiKey,
       secretApiKey: input.secretApiKey,
-      source: "flags"
+      source: "flags",
     };
   }
 
@@ -148,13 +150,14 @@ export async function resolveCredentials(
     if (!envApiKey || !envSecretApiKey) {
       throw new CliError({
         kind: "auth",
-        message: "Both PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY are required when either is supplied."
+        message:
+          "Both PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY are required when either is supplied.",
       });
     }
     return {
       apiKey: envApiKey,
       secretApiKey: envSecretApiKey,
-      source: "env"
+      source: "env",
     };
   }
 
@@ -166,7 +169,7 @@ export async function resolveCredentials(
       apiKey: profile.apiKey,
       secretApiKey: profile.secretApiKey,
       source: "profile",
-      profile: profileName
+      profile: profileName,
     };
   }
 
@@ -175,7 +178,7 @@ export async function resolveCredentials(
   throw new CliError({
     kind: "auth",
     message:
-      "Porkbun credentials were not found. Set PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY, pass --api-key/--secret-api-key, or run porkbun auth login."
+      "Porkbun credentials were not found. Set PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY, pass --api-key/--secret-api-key, or run porkbun auth login.",
   });
 }
 
@@ -208,7 +211,9 @@ function parseConfig(value: unknown): ConfigFile {
   }
 
   const activeProfile =
-    value.activeProfile === undefined ? undefined : validateProfileName(String(value.activeProfile));
+    value.activeProfile === undefined
+      ? undefined
+      : validateProfileName(String(value.activeProfile));
   return { activeProfile, profiles };
 }
 
@@ -221,7 +226,7 @@ function validateProfileName(value: string): string {
   ) {
     throw new CliError({
       kind: "usage",
-      message: "Profile names must be 1-64 letters, numbers, dots, underscores, or hyphens."
+      message: "Profile names must be 1-64 letters, numbers, dots, underscores, or hyphens.",
     });
   }
   return value;

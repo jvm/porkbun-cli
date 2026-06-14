@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
-import type { Theme } from '../theme.js';
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
+import type { Theme } from "../theme.js";
 
 export interface NameserverFormProps {
   theme: Theme;
@@ -10,8 +10,15 @@ export interface NameserverFormProps {
   onCancel: () => void;
 }
 
-export function NameserverForm({ theme, initialNameservers, onSubmit, onCancel }: NameserverFormProps) {
-  const [nameservers, setNameservers] = useState<string[]>(initialNameservers.length > 0 ? initialNameservers : ['']);
+export function NameserverForm({
+  theme,
+  initialNameservers,
+  onSubmit,
+  onCancel,
+}: NameserverFormProps) {
+  const [nameservers, setNameservers] = useState<string[]>(
+    initialNameservers.length > 0 ? initialNameservers : [""],
+  );
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   useInput((input, key) => {
@@ -21,19 +28,19 @@ export function NameserverForm({ theme, initialNameservers, onSubmit, onCancel }
     }
 
     if (key.upArrow) {
-      setFocusedIndex(prev => Math.max(0, prev - 1));
+      setFocusedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.downArrow) {
-      setFocusedIndex(prev => Math.min(nameservers.length - 1, prev + 1));
+      setFocusedIndex((prev) => Math.min(nameservers.length - 1, prev + 1));
     } else if (key.return) {
-      const validNameservers = nameservers.filter(ns => ns.trim() !== '');
+      const validNameservers = nameservers.filter((ns) => ns.trim() !== "");
       if (validNameservers.length > 0) {
         onSubmit(validNameservers);
       }
-    } else if (input === 'a') {
+    } else if (input === "a") {
       // Add new nameserver
-      setNameservers([...nameservers, '']);
+      setNameservers([...nameservers, ""]);
       setFocusedIndex(nameservers.length);
-    } else if (input === 'd' && nameservers.length > 1) {
+    } else if (input === "d" && nameservers.length > 1) {
       // Delete current nameserver
       const newNameservers = nameservers.filter((_, idx) => idx !== focusedIndex);
       setNameservers(newNameservers);
@@ -42,11 +49,7 @@ export function NameserverForm({ theme, initialNameservers, onSubmit, onCancel }
   });
 
   const updateNameserver = (index: number, value: string) => {
-    setNameservers([
-      ...nameservers.slice(0, index),
-      value,
-      ...nameservers.slice(index + 1),
-    ]);
+    setNameservers([...nameservers.slice(0, index), value, ...nameservers.slice(index + 1)]);
   };
 
   return (
@@ -56,16 +59,13 @@ export function NameserverForm({ theme, initialNameservers, onSubmit, onCancel }
         {nameservers.map((ns, idx) => (
           <Box key={idx} marginBottom={0}>
             <Text color={idx === focusedIndex ? theme.colors.primary : undefined}>
-              {idx === focusedIndex ? '▶ ' : '  '}
-              NS{idx + 1}:{' '}
+              {idx === focusedIndex ? "▶ " : "  "}
+              NS{idx + 1}:{" "}
             </Text>
             {idx === focusedIndex ? (
-              <TextInput
-                value={ns}
-                onChange={(value) => updateNameserver(idx, value)}
-              />
+              <TextInput value={ns} onChange={(value) => updateNameserver(idx, value)} />
             ) : (
-              <Text>{ns || '(empty)'}</Text>
+              <Text>{ns || "(empty)"}</Text>
             )}
           </Box>
         ))}

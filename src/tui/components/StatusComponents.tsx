@@ -1,10 +1,10 @@
 /**
  * Status, loading, empty, and error state components.
  */
-import React from 'react';
-import { Box, Text } from 'ink';
-import Spinner from 'ink-spinner';
-import type { Theme } from '../theme.js';
+import React from "react";
+import { Box, Text } from "ink";
+import Spinner from "ink-spinner";
+import type { Theme } from "../theme.js";
 
 interface LoadingStateProps {
   message: string;
@@ -49,9 +49,7 @@ export function ErrorState({ error, retryable, onRetry, theme }: ErrorStateProps
         {theme.icons.cross} Error
       </Text>
       <Text>{error.message}</Text>
-      {retryable && onRetry && (
-        <Text dimColor>Press r to retry.</Text>
-      )}
+      {retryable && onRetry && <Text dimColor>Press r to retry.</Text>}
     </Box>
   );
 }
@@ -63,9 +61,7 @@ interface StaleBannerProps {
 export function StaleBanner({ theme }: StaleBannerProps) {
   return (
     <Box borderStyle="single" borderColor="yellow" padding={0}>
-      <Text color="yellow">
-        {theme.icons.stale} Data may be stale. Press r to refresh.
-      </Text>
+      <Text color="yellow">{theme.icons.stale} Data may be stale. Press r to refresh.</Text>
     </Box>
   );
 }
@@ -88,7 +84,7 @@ export function StatusLine({ message, selection, loading, theme }: StatusLinePro
         {selection && selection.count > 0 && (
           <Text color={theme.colors.info}>
             {selection.count} selected
-            {selection.extendsBeyondLoaded && ' (beyond loaded)'}
+            {selection.extendsBeyondLoaded && " (beyond loaded)"}
           </Text>
         )}
       </Box>
@@ -106,7 +102,9 @@ export function KeyHelp({ bindings, theme }: KeyHelpProps) {
     <Box flexWrap="wrap">
       {bindings.map((binding, i) => (
         <Box key={i} marginRight={2}>
-          <Text bold color={theme.colors.primary}>{binding.label}</Text>
+          <Text bold color={theme.colors.primary}>
+            {binding.label}
+          </Text>
           <Text dimColor> {binding.description}</Text>
         </Box>
       ))}

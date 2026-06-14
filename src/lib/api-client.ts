@@ -53,7 +53,7 @@ export class ApiClient {
     const placement = authPlacement(operation);
     const method = operation.method;
     const headers = new Headers({
-      "User-Agent": "porkbun-cli/0.1.1"
+      "User-Agent": "porkbun-cli/0.1.1",
     });
 
     let requestBody: Record<string, unknown> | undefined;
@@ -68,14 +68,16 @@ export class ApiClient {
       requestBody = {
         ...(requestBody ?? {}),
         apikey: credentials.apiKey,
-        secretapikey: credentials.secretApiKey
+        secretapikey: credentials.secretApiKey,
       };
     }
 
     const url = buildUrl(this.baseUrl(Boolean(credentials) && !request.dryRun), path, query);
     const idempotencyKey = operation.mutating
-      ? request.idempotencyKey ??
-        (request.freshIdempotencyKey ? randomUUID() : deterministicIdempotencyKey(operation, path, body))
+      ? (request.idempotencyKey ??
+        (request.freshIdempotencyKey
+          ? randomUUID()
+          : deterministicIdempotencyKey(operation, path, body)))
       : undefined;
     if (idempotencyKey) headers.set("Idempotency-Key", idempotencyKey);
 
@@ -89,7 +91,7 @@ export class ApiClient {
         idempotencyKey,
         body: requestBody ? redact(requestBody) : undefined,
         url: redactUrl(url),
-        query: Object.keys(query).length > 0 ? redact(query) : undefined
+        query: Object.keys(query).length > 0 ? redact(query) : undefined,
       } satisfies DryRunResult;
     }
 
@@ -109,17 +111,21 @@ export class ApiClient {
         headers,
         body: method === "POST" ? JSON.stringify(requestBody ?? {}) : undefined,
         redirect: "error",
-        signal
+        signal,
       });
     } catch (error) {
       const timeout =
         error instanceof Error &&
-        (error.name === "TimeoutError" || error.name === "AbortError" || error.message.includes("timed out"));
+        (error.name === "TimeoutError" ||
+          error.name === "AbortError" ||
+          error.message.includes("timed out"));
       throw new CliError({
         kind: timeout ? "timeout" : "network",
-        message: timeout ? `Request timed out after ${this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS} ms.` : "Network request failed.",
+        message: timeout
+          ? `Request timed out after ${this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS} ms.`
+          : "Network request failed.",
         retryable: true,
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       });
     }
 
@@ -142,8 +148,8 @@ export class ApiClient {
         details: cleanObject({
           httpStatus: response.status,
           ttlRemaining: apiError.ttlRemaining,
-          rateLimitReset: response.headers.get("X-RateLimit-Reset") ?? undefined
-        })
+          rateLimitReset: response.headers.get("X-RateLimit-Reset") ?? undefined,
+        }),
       });
     }
 
@@ -153,11 +159,14 @@ export class ApiClient {
   private baseUrl(hasCredentials: boolean): string {
     return validateBaseUrl(
       this.options.baseUrl ?? (this.options.ipv4 ? IPV4_BASE_URL : DEFAULT_BASE_URL),
-      hasCredentials
+      hasCredentials,
     );
   }
 
-  private async credentialsFor(operation: OperationDefinition, dryRun: boolean): Promise<Credentials | undefined> {
+  private async credentialsFor(
+    operation: OperationDefinition,
+    dryRun: boolean,
+  ): Promise<Credentials | undefined> {
     if (operation.auth === "none") return undefined;
     return resolveCredentials(this.options, operation.auth === "required" && !dryRun);
   }
@@ -172,28 +181,34 @@ export function validateBaseUrl(value: string, hasCredentials = false): string {
   }
 
   if (url.username || url.password) {
-    throw new CliError({ kind: "usage", message: "API base URLs must not contain embedded credentials." });
+    throw new CliError({
+      kind: "usage",
+      message: "API base URLs must not contain embedded credentials.",
+    });
   }
   if (url.search || url.hash) {
-    throw new CliError({ kind: "usage", message: "API base URLs must not contain query parameters or fragments." });
+    throw new CliError({
+      kind: "usage",
+      message: "API base URLs must not contain query parameters or fragments.",
+    });
   }
 
-  const loopback = url.hostname === "127.0.0.1" || url.hostname === "::1" || url.hostname === "localhost";
+  const loopback =
+    url.hostname === "127.0.0.1" || url.hostname === "::1" || url.hostname === "localhost";
   if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback)) {
     throw new CliError({
       kind: "usage",
-      message: "API base URLs must use HTTPS. Plain HTTP is allowed only for loopback testing."
+      message: "API base URLs must use HTTPS. Plain HTTP is allowed only for loopback testing.",
     });
   }
 
   if (hasCredentials) {
     const officialOrigin =
-      url.origin === "https://api.porkbun.com" ||
-      url.origin === "https://api-ipv4.porkbun.com";
+      url.origin === "https://api.porkbun.com" || url.origin === "https://api-ipv4.porkbun.com";
     if (!officialOrigin) {
       throw new CliError({
         kind: "usage",
-        message: "Refusing to send Porkbun credentials to a non-Porkbun API origin."
+        message: "Refusing to send Porkbun credentials to a non-Porkbun API origin.",
       });
     }
   }
@@ -214,21 +229,25 @@ export function redactUrl(value: string): string {
 export function deterministicIdempotencyKey(
   operation: Pick<OperationDefinition, "operationId">,
   path: string,
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
 ): string {
   const hash = createHash("sha256")
     .update(
       JSON.stringify({
         operationId: operation.operationId,
         path,
-        body: removeCredentialFields(body)
-      })
+        body: removeCredentialFields(body),
+      }),
     )
     .digest("hex");
   return `porkbun-cli:${hash.slice(0, 48)}`;
 }
 
-export function buildUrl(baseUrl: string, path: string, query: Record<string, unknown> = {}): string {
+export function buildUrl(
+  baseUrl: string,
+  path: string,
+  query: Record<string, unknown> = {},
+): string {
   const url = new URL(`${stripTrailingSlash(baseUrl)}${path}`);
   for (const [key, value] of Object.entries(query)) {
     if (value === undefined || value === null || value === "") continue;
@@ -278,7 +297,7 @@ export function fillPath(path: string, params: Record<string, unknown>): string 
     if (value === undefined || value === null) {
       throw new CliError({
         kind: "usage",
-        message: `Missing required path parameter: ${key}`
+        message: `Missing required path parameter: ${key}`,
       });
     }
     result += encodeURIComponent(String(value));
@@ -289,7 +308,8 @@ export function fillPath(path: string, params: Record<string, unknown>): string 
 }
 
 function authPlacement(operation: OperationDefinition): "header" | "body" {
-  if (operation.authPlacement === "header" || operation.authPlacement === "body") return operation.authPlacement;
+  if (operation.authPlacement === "header" || operation.authPlacement === "body")
+    return operation.authPlacement;
   return operation.method === "GET" ? "header" : "body";
 }
 
@@ -309,13 +329,15 @@ function responseHasError(data: unknown): boolean {
 
 function removeCredentialFields(value: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(value).filter(([key]) => key !== "apikey" && key !== "secretapikey")
+    Object.entries(value).filter(([key]) => key !== "apikey" && key !== "secretapikey"),
   );
 }
 
 function cleanObject<T extends Record<string, unknown>>(value: T): T {
   return Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined && entry !== null && entry !== "")
+    Object.entries(value).filter(
+      ([, entry]) => entry !== undefined && entry !== null && entry !== "",
+    ),
   ) as T;
 }
 

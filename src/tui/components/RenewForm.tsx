@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
-import type { NormalizedDomain } from '../types.js';
-import type { TuiApiService } from '../services/api.js';
-import type { Theme } from '../theme.js';
-import { priceStringToCents } from '../forms/validators.js';
+import React, { useState, useEffect } from "react";
+import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
+import type { NormalizedDomain } from "../types.js";
+import type { TuiApiService } from "../services/api.js";
+import type { Theme } from "../theme.js";
+import { priceStringToCents } from "../forms/validators.js";
 
 export interface RenewFormProps {
   theme: Theme;
@@ -20,11 +20,18 @@ interface RenewalPricingResult {
   reason?: string;
 }
 
-export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCancel }: RenewFormProps) {
+export function RenewForm({
+  theme,
+  service,
+  domain,
+  balanceCents,
+  onRenew,
+  onCancel,
+}: RenewFormProps) {
   const [pricing, setPricing] = useState<RenewalPricingResult | null>(null);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [confirmationText, setConfirmationText] = useState('');
+  const [confirmationText, setConfirmationText] = useState("");
 
   // Check renewal pricing on mount
   useEffect(() => {
@@ -37,19 +44,19 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
         // when it does not match the exact domain total.
         let priceStr: string | undefined;
         try {
-          priceStr = await service.getDomainPriceFromCheck(domain.domain, 'renewal');
+          priceStr = await service.getDomainPriceFromCheck(domain.domain, "renewal");
         } catch {
           priceStr = undefined;
         }
         if (!priceStr) {
-          priceStr = await service.getTldPrice(domain.domain, 'renewal');
+          priceStr = await service.getTldPrice(domain.domain, "renewal");
         }
         const parsed = priceStr ? priceStringToCents(priceStr) : undefined;
         if (parsed !== undefined) {
           setPricing({ cost: parsed });
         } else {
           setPricing({
-            reason: 'Renewal pricing not available from API. Please check the Porkbun website.',
+            reason: "Renewal pricing not available from API. Please check the Porkbun website.",
           });
         }
       } catch (err) {
@@ -84,7 +91,9 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
   if (error) {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color={theme.colors.danger}>Error checking renewal pricing</Text>
+        <Text bold color={theme.colors.danger}>
+          Error checking renewal pricing
+        </Text>
         <Box marginTop={1}>
           <Text color={theme.colors.danger}>{error}</Text>
         </Box>
@@ -98,15 +107,17 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
   if (!pricing?.cost) {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color={theme.colors.warning}>Cannot renew via TUI</Text>
+        <Text bold color={theme.colors.warning}>
+          Cannot renew via TUI
+        </Text>
         <Box marginTop={1}>
-          <Text>{pricing?.reason || 'Renewal pricing not available'}</Text>
+          <Text>{pricing?.reason || "Renewal pricing not available"}</Text>
         </Box>
         <Box marginTop={1}>
           <Text dimColor>Domain: {domain.domain}</Text>
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>Current expiration: {domain.expireDate || 'Unknown'}</Text>
+          <Text dimColor>Current expiration: {domain.expireDate || "Unknown"}</Text>
         </Box>
         <Box marginTop={1}>
           <Text dimColor>Esc: Cancel</Text>
@@ -119,7 +130,9 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color={theme.colors.danger}>⚠ Billable Operation: Renew Domain</Text>
+      <Text bold color={theme.colors.danger}>
+        ⚠ Billable Operation: Renew Domain
+      </Text>
       <Box marginTop={1} flexDirection="column">
         <Box>
           <Text>Domain: </Text>
@@ -127,11 +140,13 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
         </Box>
         <Box>
           <Text>Current expiration: </Text>
-          <Text dimColor>{domain.expireDate || 'Unknown'}</Text>
+          <Text dimColor>{domain.expireDate || "Unknown"}</Text>
         </Box>
         <Box>
           <Text>Renewal cost: </Text>
-          <Text bold color={theme.colors.danger}>${(pricing.cost / 100).toFixed(2)}</Text>
+          <Text bold color={theme.colors.danger}>
+            ${(pricing.cost / 100).toFixed(2)}
+          </Text>
           <Text dimColor> (extend by 1 year)</Text>
         </Box>
         {balanceCents !== undefined && (
@@ -151,7 +166,9 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
         </Box>
         {canAfford && (
           <Box marginTop={1} flexDirection="column">
-            <Text bold color={theme.colors.warning}>To confirm, type the domain name exactly:</Text>
+            <Text bold color={theme.colors.warning}>
+              To confirm, type the domain name exactly:
+            </Text>
             <Box>
               <Text>Type: </Text>
               <TextInput value={confirmationText} onChange={setConfirmationText} />
@@ -163,7 +180,7 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
         )}
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>{canAfford ? 'Enter: Renew | Esc: Cancel' : 'Esc: Cancel'}</Text>
+        <Text dimColor>{canAfford ? "Enter: Renew | Esc: Cancel" : "Esc: Cancel"}</Text>
       </Box>
     </Box>
   );

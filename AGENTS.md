@@ -9,6 +9,7 @@ they add to it.
 ## Standard jvm-OSS conventions (applies to all repos)
 
 ### Stack
+
 - **Runtime:** Node.js 24+ (tested on Node 24.x and Node 26.x in CI)
 - **Package manager:** pnpm 11.x, pinned via `packageManager` in `package.json`
 - **Module system:** ESM (`"type": "module"`)
@@ -22,23 +23,23 @@ they add to it.
 
 All commands use pnpm.
 
-| Command | Purpose |
-|---|---|
-| `pnpm install` | Install deps (uses `pnpm-lock.yaml`) |
-| `pnpm lint` | Run ESLint |
-| `pnpm format` | Format with Prettier |
-| `pnpm format:check` | Verify formatting (used in CI) |
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm test` | Run vitest once |
-| `pnpm test:watch` | Run vitest in watch mode |
-| `pnpm build` | Compile to `dist/` via `tsc` |
-| `pnpm audit` | `npm audit --omit=dev --audit-level=high` |
-| `pnpm verify-pack` | `npm pack --dry-run` |
-| `pnpm validate` | lint + format:check + typecheck + test + build + audit |
-| `pnpm security:secrets` | betterleaks on the working tree (full scan) |
-| `pnpm security:scripts` | shellcheck on `*.sh` (skipped if shellcheck not on PATH) |
-| `pnpm security:workflows` | actionlint on `.github/workflows/*.yml` (skipped if not on PATH) |
-| `pnpm security:local` | audit + secrets + scripts + workflows (opt-in, full local security) |
+| Command                   | Purpose                                                             |
+| ------------------------- | ------------------------------------------------------------------- |
+| `pnpm install`            | Install deps (uses `pnpm-lock.yaml`)                                |
+| `pnpm lint`               | Run ESLint                                                          |
+| `pnpm format`             | Format with Prettier                                                |
+| `pnpm format:check`       | Verify formatting (used in CI)                                      |
+| `pnpm typecheck`          | `tsc --noEmit`                                                      |
+| `pnpm test`               | Run vitest once                                                     |
+| `pnpm test:watch`         | Run vitest in watch mode                                            |
+| `pnpm build`              | Compile to `dist/` via `tsc`                                        |
+| `pnpm audit`              | `npm audit --omit=dev --audit-level=high`                           |
+| `pnpm verify-pack`        | `npm pack --dry-run`                                                |
+| `pnpm validate`           | lint + format:check + typecheck + test + build + audit              |
+| `pnpm security:secrets`   | betterleaks on the working tree (full scan)                         |
+| `pnpm security:scripts`   | shellcheck on `*.sh` (skipped if shellcheck not on PATH)            |
+| `pnpm security:workflows` | actionlint on `.github/workflows/*.yml` (skipped if not on PATH)    |
+| `pnpm security:local`     | audit + secrets + scripts + workflows (opt-in, full local security) |
 
 ### Code style
 

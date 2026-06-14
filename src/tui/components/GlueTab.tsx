@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import type { NormalizedGlueRecord } from '../types.js';
-import type { Theme } from '../theme.js';
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
+import type { NormalizedGlueRecord } from "../types.js";
+import type { Theme } from "../theme.js";
 
 export interface GlueTabProps {
   records: NormalizedGlueRecord[];
@@ -15,17 +15,17 @@ export function GlueTab({ records, theme, onCreate, onEdit, onDelete }: GlueTabP
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useInput((input, key) => {
-    if (input === 'n') {
+    if (input === "n") {
       onCreate();
       return;
     }
 
-    if (input === 'e' && records.at(selectedIndex)) {
+    if (input === "e" && records.at(selectedIndex)) {
       onEdit(records.at(selectedIndex)!);
       return;
     }
 
-    if (input === 'd' && records.at(selectedIndex)) {
+    if (input === "d" && records.at(selectedIndex)) {
       onDelete(records.at(selectedIndex)!);
       return;
     }
@@ -53,8 +53,8 @@ export function GlueTab({ records, theme, onCreate, onEdit, onDelete }: GlueTabP
         {records.map((record, idx) => (
           <Box key={record.hostname}>
             <Text color={idx === selectedIndex ? theme.colors.primary : undefined}>
-              {idx === selectedIndex ? '▶ ' : '  '}
-              {record.hostname}: {record.ips.join(', ')}
+              {idx === selectedIndex ? "▶ " : "  "}
+              {record.hostname}: {record.ips.join(", ")}
             </Text>
           </Box>
         ))}

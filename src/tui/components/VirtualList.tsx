@@ -2,9 +2,9 @@
  * VirtualList - bounded rendering for large lists with scroll preservation.
  * Never renders more than 100 rows (PRD requirement).
  */
-import React, { useMemo } from 'react';
-import { Box, Text } from 'ink';
-import type { Theme } from '../theme.js';
+import React, { useMemo } from "react";
+import { Box, Text } from "ink";
+import type { Theme } from "../theme.js";
 
 interface VirtualListProps<T> {
   items: T[];
@@ -29,7 +29,7 @@ export function VirtualList<T>({
   const { startIndex, visibleItems } = useMemo(() => {
     const start = Math.max(
       0,
-      Math.min(selectedIndex - Math.floor(visibleCount / 2), items.length - visibleCount)
+      Math.min(selectedIndex - Math.floor(visibleCount / 2), items.length - visibleCount),
     );
     return {
       startIndex: start,
@@ -50,9 +50,7 @@ export function VirtualList<T>({
       {/* Scroll indicator */}
       {startIndex > 0 && (
         <Box>
-          <Text dimColor>
-            ↑ {startIndex} more above
-          </Text>
+          <Text dimColor>↑ {startIndex} more above</Text>
         </Box>
       )}
 
@@ -60,19 +58,13 @@ export function VirtualList<T>({
       {visibleItems.map((item, i) => {
         const actualIndex = startIndex + i;
         const isSelected = actualIndex === selectedIndex;
-        return (
-          <Box key={actualIndex}>
-            {renderItem(item, actualIndex, isSelected)}
-          </Box>
-        );
+        return <Box key={actualIndex}>{renderItem(item, actualIndex, isSelected)}</Box>;
       })}
 
       {/* Scroll indicator */}
       {startIndex + visibleCount < items.length && (
         <Box>
-          <Text dimColor>
-            ↓ {items.length - startIndex - visibleCount} more below
-          </Text>
+          <Text dimColor>↓ {items.length - startIndex - visibleCount} more below</Text>
         </Box>
       )}
     </Box>

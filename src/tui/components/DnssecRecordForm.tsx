@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
-import type { Theme } from '../theme.js';
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
+import type { Theme } from "../theme.js";
 
 export interface DnssecRecordFormProps {
   theme: Theme;
@@ -10,11 +10,16 @@ export interface DnssecRecordFormProps {
   onCancel: () => void;
 }
 
-export function DnssecRecordForm({ theme, initialValues, onSubmit, onCancel }: DnssecRecordFormProps) {
-  const [keyTag, setKeyTag] = useState(initialValues?.keyTag ?? '');
-  const [alg, setAlg] = useState(initialValues?.alg ?? '');
-  const [digestType, setDigestType] = useState(initialValues?.digestType ?? '');
-  const [digest, setDigest] = useState(initialValues?.digest ?? '');
+export function DnssecRecordForm({
+  theme,
+  initialValues,
+  onSubmit,
+  onCancel,
+}: DnssecRecordFormProps) {
+  const [keyTag, setKeyTag] = useState(initialValues?.keyTag ?? "");
+  const [alg, setAlg] = useState(initialValues?.alg ?? "");
+  const [digestType, setDigestType] = useState(initialValues?.digestType ?? "");
+  const [digest, setDigest] = useState(initialValues?.digest ?? "");
   const [focusedField, setFocusedField] = useState(0);
 
   useInput((input, key) => {
@@ -42,9 +47,7 @@ export function DnssecRecordForm({ theme, initialValues, onSubmit, onCancel }: D
     <Box flexDirection="column" padding={1}>
       <Text bold>Create DNSSEC Record</Text>
       <Box marginTop={1}>
-        <Text color={focusedField === 0 ? theme.colors.primary : undefined}>
-          Key Tag:{' '}
-        </Text>
+        <Text color={focusedField === 0 ? theme.colors.primary : undefined}>Key Tag: </Text>
         {focusedField === 0 ? (
           <TextInput value={keyTag} onChange={setKeyTag} />
         ) : (
@@ -52,19 +55,11 @@ export function DnssecRecordForm({ theme, initialValues, onSubmit, onCancel }: D
         )}
       </Box>
       <Box marginTop={1}>
-        <Text color={focusedField === 1 ? theme.colors.primary : undefined}>
-          Algorithm:{' '}
-        </Text>
-        {focusedField === 1 ? (
-          <TextInput value={alg} onChange={setAlg} />
-        ) : (
-          <Text>{alg}</Text>
-        )}
+        <Text color={focusedField === 1 ? theme.colors.primary : undefined}>Algorithm: </Text>
+        {focusedField === 1 ? <TextInput value={alg} onChange={setAlg} /> : <Text>{alg}</Text>}
       </Box>
       <Box marginTop={1}>
-        <Text color={focusedField === 2 ? theme.colors.primary : undefined}>
-          Digest Type:{' '}
-        </Text>
+        <Text color={focusedField === 2 ? theme.colors.primary : undefined}>Digest Type: </Text>
         {focusedField === 2 ? (
           <TextInput value={digestType} onChange={setDigestType} />
         ) : (
@@ -72,9 +67,7 @@ export function DnssecRecordForm({ theme, initialValues, onSubmit, onCancel }: D
         )}
       </Box>
       <Box marginTop={1}>
-        <Text color={focusedField === 3 ? theme.colors.primary : undefined}>
-          Digest:{' '}
-        </Text>
+        <Text color={focusedField === 3 ? theme.colors.primary : undefined}>Digest: </Text>
         {focusedField === 3 ? (
           <TextInput value={digest} onChange={setDigest} />
         ) : (

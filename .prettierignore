@@ -4,3 +4,13 @@ coverage/
 *.tgz
 *.tsbuildinfo
 CHANGELOG.md
+
+# Bundled/generated content
+src/generated/
+
+# Living TUI plan documents
+docs/PLAN-tui.md
+docs/PRD-tui.md
+
+# Pi agent settings
+.pi/

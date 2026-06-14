@@ -3,6 +3,15 @@
  * Strips control characters, bounds field lengths, and redacts sensitive values.
  */
 
+/* eslint-disable no-control-regex --
+ * This whole module is the redaction layer. The `no-control-regex` rule
+ * warns about regexes that match control characters, but that is exactly
+ * what `CONTROL_CHARS` and `ANSI_ESCAPE` are for — stripping C0 control
+ * bytes and ANSI CSI sequences from untrusted input. The patterns are
+ * narrowly bounded (specific byte ranges) and only used for replacement,
+ * never for matching against user input that drives control flow.
+ */
+
 const SENSITIVE_KEY_PATTERNS = [
   /api[_-]?key/i,
   /secret[_-]?api[_-]?key/i,
@@ -29,12 +38,12 @@ const MAX_FIELD_LENGTH = 200;
  * Allows only explicitly handled line breaks and tabs.
  */
 export function sanitizeString(value: unknown): string {
-  if (value === null || value === undefined) return '';
+  if (value === null || value === undefined) return "";
   const str = String(value);
   return str
-    .replace(ANSI_ESCAPE, '')
-    .replace(CONTROL_CHARS, '')
-    .replace(/[\r\n]+/g, ' ')
+    .replace(ANSI_ESCAPE, "")
+    .replace(CONTROL_CHARS, "")
+    .replace(/[\r\n]+/g, " ")
     .trim();
 }
 
@@ -50,14 +59,14 @@ export function truncateField(value: string, maxLen = MAX_FIELD_LENGTH): string 
  * Check if a key matches a sensitive pattern.
  */
 export function isSensitiveKey(key: string): boolean {
-  return SENSITIVE_KEY_PATTERNS.some(pattern => pattern.test(key));
+  return SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));
 }
 
 /**
  * Redact a value for review screens.
  */
 export function redactReviewValue(key: string, value: unknown): string {
-  if (isSensitiveKey(key)) return '[REDACTED]';
+  if (isSensitiveKey(key)) return "[REDACTED]";
   return sanitizeString(value);
 }
 
@@ -68,9 +77,9 @@ export function redactErrorValue(value: unknown): string {
   const str = sanitizeString(value);
   // Redact anything that looks like an API key or secret
   return str
-    .replace(/pk[12]_live_[a-zA-Z0-9]+/g, '[REDACTED]')
-    .replace(/sk[12]_live_[a-zA-Z0-9]+/g, '[REDACTED]')
-    .replace(/-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----/g, '[REDACTED]');
+    .replace(/pk[12]_live_[a-zA-Z0-9]+/g, "[REDACTED]")
+    .replace(/sk[12]_live_[a-zA-Z0-9]+/g, "[REDACTED]")
+    .replace(/-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----/g, "[REDACTED]");
 }
 
 /**
@@ -87,8 +96,8 @@ export function redactObject(obj: Record<string, unknown>): Record<string, unkno
   const result = new Map<string, unknown>();
   for (const [key, value] of Object.entries(obj)) {
     if (isSensitiveKey(key)) {
-      result.set(key, '[REDACTED]');
-    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      result.set(key, "[REDACTED]");
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
       result.set(key, redactObject(value as Record<string, unknown>));
     } else {
       result.set(key, value);

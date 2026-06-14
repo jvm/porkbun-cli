@@ -13,11 +13,11 @@ export type Route =
   | HelpRoute;
 
 export interface StartupRoute {
-  name: 'startup';
+  name: "startup";
 }
 
 export interface DomainsRoute {
-  name: 'domains';
+  name: "domains";
   query?: string;
   filters?: DomainFilters;
   sort?: DomainSort;
@@ -26,35 +26,35 @@ export interface DomainsRoute {
 }
 
 export type DomainDetailTab =
-  | 'overview'
-  | 'dns'
-  | 'nameservers'
-  | 'glue'
-  | 'forwards'
-  | 'dnssec'
-  | 'ssl'
-  | 'transfer';
+  | "overview"
+  | "dns"
+  | "nameservers"
+  | "glue"
+  | "forwards"
+  | "dnssec"
+  | "ssl"
+  | "transfer";
 
 export interface DomainDetailRoute {
-  name: 'domain-detail';
+  name: "domain-detail";
   domain: string;
   tab: DomainDetailTab;
 }
 
 export interface TransfersRoute {
-  name: 'transfers';
+  name: "transfers";
 }
 
 export interface RegisterRoute {
-  name: 'register';
+  name: "register";
 }
 
 export interface AccountRoute {
-  name: 'account';
+  name: "account";
 }
 
 export interface HelpRoute {
-  name: 'help';
+  name: "help";
 }
 
 export interface DomainFilters {
@@ -67,8 +67,8 @@ export interface DomainFilters {
 }
 
 export interface DomainSort {
-  field: 'domain' | 'expiration' | 'tld' | 'autoRenew' | 'apiAccess';
-  direction: 'asc' | 'desc';
+  field: "domain" | "expiration" | "tld" | "autoRenew" | "apiAccess";
+  direction: "asc" | "desc";
 }
 
 export type Modal =
@@ -81,12 +81,12 @@ export type Modal =
   | FormModal;
 
 export interface ProfilePickerModal {
-  type: 'profile-picker';
+  type: "profile-picker";
   profiles: string[];
 }
 
 export interface ConfirmModal {
-  type: 'confirm';
+  type: "confirm";
   message: string;
   confirmText?: string;
   onConfirm: () => void;
@@ -94,11 +94,11 @@ export interface ConfirmModal {
 }
 
 export interface ReviewModal {
-  type: 'review';
+  type: "review";
   operation: string;
   target: string;
   fields: Array<{ label: string; value: string; sensitive?: boolean }>;
-  classification: 'read-only' | 'mutating' | 'destructive' | 'billable';
+  classification: "read-only" | "mutating" | "destructive" | "billable";
   idempotencyKey?: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -106,7 +106,7 @@ export interface ReviewModal {
 }
 
 export interface ResultModal {
-  type: 'result';
+  type: "result";
   success: boolean;
   message: string;
   details?: string;
@@ -114,17 +114,17 @@ export interface ResultModal {
 }
 
 export interface CommandPaletteModal {
-  type: 'command-palette';
+  type: "command-palette";
   context: string;
 }
 
 export interface HelpModal {
-  type: 'help';
+  type: "help";
   context: string;
 }
 
 export interface FormModal {
-  type: 'form';
+  type: "form";
   formType: string;
   domain?: string;
   recordId?: string;
@@ -135,15 +135,15 @@ export interface NavigationState {
   current: Route;
   history: Route[];
   modals: Modal[];
-  focusRegion: 'header' | 'nav' | 'main' | 'footer';
+  focusRegion: "header" | "nav" | "main" | "footer";
 }
 
 export function createInitialNavigationState(): NavigationState {
   return {
-    current: { name: 'startup' },
+    current: { name: "startup" },
     history: [],
     modals: [],
-    focusRegion: 'main',
+    focusRegion: "main",
   };
 }
 

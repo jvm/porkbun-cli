@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
-import type { TuiApiService } from '../services/api.js';
-import type { Theme } from '../theme.js';
-import { priceStringToCents } from '../forms/validators.js';
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
+import type { TuiApiService } from "../services/api.js";
+import type { Theme } from "../theme.js";
+import { priceStringToCents } from "../forms/validators.js";
 
 export interface TransferFormProps {
   theme: Theme;
@@ -18,26 +18,32 @@ interface TransferPricingResult {
   reason?: string;
 }
 
-export function TransferForm({ theme, service, balanceCents, onTransfer, onCancel }: TransferFormProps) {
-  const [domain, setDomain] = useState('');
-  const [authCode, setAuthCode] = useState('');
-  const [step, setStep] = useState<'input' | 'checking' | 'confirm'>('input');
+export function TransferForm({
+  theme,
+  service,
+  balanceCents,
+  onTransfer,
+  onCancel,
+}: TransferFormProps) {
+  const [domain, setDomain] = useState("");
+  const [authCode, setAuthCode] = useState("");
+  const [step, setStep] = useState<"input" | "checking" | "confirm">("input");
   const [pricing, setPricing] = useState<TransferPricingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [confirmationText, setConfirmationText] = useState('');
+  const [confirmationText, setConfirmationText] = useState("");
 
   const checkPricing = async () => {
-    if (!domain || !domain.includes('.')) {
-      setError('Please enter a valid domain name (e.g., example.com)');
+    if (!domain || !domain.includes(".")) {
+      setError("Please enter a valid domain name (e.g., example.com)");
       return;
     }
 
     if (!authCode) {
-      setError('Authorization code is required for transfers');
+      setError("Authorization code is required for transfers");
       return;
     }
 
-    setStep('checking');
+    setStep("checking");
     setError(null);
 
     try {
@@ -45,25 +51,25 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
       // the generic TLD tariff only if the per-domain price is missing.
       let priceStr: string | undefined;
       try {
-        priceStr = await service.getDomainPriceFromCheck(domain, 'transfer');
+        priceStr = await service.getDomainPriceFromCheck(domain, "transfer");
       } catch {
         priceStr = undefined;
       }
       if (!priceStr) {
-        priceStr = await service.getTldPrice(domain, 'transfer');
+        priceStr = await service.getTldPrice(domain, "transfer");
       }
       const parsed = priceStr ? priceStringToCents(priceStr) : undefined;
       if (parsed !== undefined) {
         setPricing({ cost: parsed });
-        setStep('confirm');
+        setStep("confirm");
       } else {
-        setPricing({ reason: 'Transfer pricing not available from API' });
-        setError('Transfer pricing not available. Please check the Porkbun website.');
+        setPricing({ reason: "Transfer pricing not available from API" });
+        setError("Transfer pricing not available. Please check the Porkbun website.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setStep('confirm');
+      setStep("confirm");
     }
   };
 
@@ -73,18 +79,18 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
       return;
     }
 
-    if (step === 'input') {
+    if (step === "input") {
       if (key.return && domain && authCode) {
         checkPricing();
       }
-    } else if (step === 'confirm' && pricing?.cost) {
+    } else if (step === "confirm" && pricing?.cost) {
       if (key.return && confirmationText === domain) {
         onTransfer(domain, pricing.cost, authCode);
       }
     }
   });
 
-  if (step === 'input' || step === 'checking') {
+  if (step === "input" || step === "checking") {
     return (
       <Box flexDirection="column" padding={1}>
         <Text bold>Transfer Domain to Porkbun</Text>
@@ -95,14 +101,18 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
           </Box>
           <Box>
             <Text>Authorization Code: </Text>
-            <TextInput value={authCode} onChange={setAuthCode} placeholder="Auth code from current registrar" />
+            <TextInput
+              value={authCode}
+              onChange={setAuthCode}
+              placeholder="Auth code from current registrar"
+            />
           </Box>
           {error && (
             <Box marginTop={1}>
               <Text color={theme.colors.danger}>{error}</Text>
             </Box>
           )}
-          {step === 'checking' && (
+          {step === "checking" && (
             <Box marginTop={1}>
               <Text dimColor>Checking transfer pricing...</Text>
             </Box>
@@ -118,9 +128,11 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
   if (error || !pricing?.cost) {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color={theme.colors.danger}>Cannot transfer domain</Text>
+        <Text bold color={theme.colors.danger}>
+          Cannot transfer domain
+        </Text>
         <Box marginTop={1}>
-          <Text>{error || pricing?.reason || 'Unknown error'}</Text>
+          <Text>{error || pricing?.reason || "Unknown error"}</Text>
         </Box>
         <Box marginTop={1}>
           <Text dimColor>Esc: Cancel</Text>
@@ -133,7 +145,9 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color={theme.colors.danger}>⚠ Billable Operation: Transfer Domain</Text>
+      <Text bold color={theme.colors.danger}>
+        ⚠ Billable Operation: Transfer Domain
+      </Text>
       <Box marginTop={1} flexDirection="column">
         <Box>
           <Text>Domain: </Text>
@@ -141,11 +155,13 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
         </Box>
         <Box>
           <Text>Authorization Code: </Text>
-          <Text dimColor>{'•'.repeat(Math.min(authCode.length, 20))}</Text>
+          <Text dimColor>{"•".repeat(Math.min(authCode.length, 20))}</Text>
         </Box>
         <Box>
           <Text>Transfer cost: </Text>
-          <Text bold color={theme.colors.danger}>${(pricing.cost / 100).toFixed(2)}</Text>
+          <Text bold color={theme.colors.danger}>
+            ${(pricing.cost / 100).toFixed(2)}
+          </Text>
           <Text dimColor> (includes 1 year extension)</Text>
         </Box>
         {balanceCents !== undefined && (
@@ -166,7 +182,9 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
         </Box>
         {canAfford && (
           <Box marginTop={1} flexDirection="column">
-            <Text bold color={theme.colors.warning}>To confirm, type the domain name exactly:</Text>
+            <Text bold color={theme.colors.warning}>
+              To confirm, type the domain name exactly:
+            </Text>
             <Box>
               <Text>Type: </Text>
               <TextInput value={confirmationText} onChange={setConfirmationText} />
@@ -178,7 +196,7 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
         )}
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>{canAfford ? 'Enter: Initiate transfer | Esc: Cancel' : 'Esc: Cancel'}</Text>
+        <Text dimColor>{canAfford ? "Enter: Initiate transfer | Esc: Cancel" : "Esc: Cancel"}</Text>
       </Box>
     </Box>
   );
