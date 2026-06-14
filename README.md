@@ -111,10 +111,12 @@ porkbun api call dnsCreate --param domain=example.com --body '{"type":"A","name"
 ## Development
 
 ```sh
-npm install
-npm run build
-npm test
+pnpm install
+pnpm test
+pnpm build
 ```
+
+A single `pnpm validate` runs the full pipeline (lint + format:check + typecheck + test + build + audit); use it before opening a PR. `pnpm exec lefthook install` (one-time per clone) wires up the pre-commit and pre-push hooks so secrets, formatting, and the full validation gate run locally before CI.
 
 The test suite includes config/auth precedence, output formatting, request construction, error mapping, CLI integration, and a contract check that every bundled OpenAPI `operationId` is represented in the operation registry.
 
