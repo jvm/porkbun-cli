@@ -198,15 +198,22 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
       return;
     }
 
-    // List navigation
+    // List navigation. The min(... length - 1) guard alone would
+    // produce -1 when the list is empty (length - 1 = -1, and prev
+    // starts at 0 so the min is -1). After the refactor to .at(),
+    // arr.at(-1) returns the last element of a non-empty array, so
+    // a stale -1 would silently target the last domain once the
+    // list populates. The outer Math.max(0, ...) keeps selectedIndex
+    // in [0, length - 1] (or 0 when the list is empty) so .at() is
+    // always safe.
     if (key.upArrow || char === 'k') {
       setSelectedIndex(prev => Math.max(0, prev - 1));
     } else if (key.downArrow || char === 'j') {
-      setSelectedIndex(prev => Math.min(filteredDomains.length - 1, prev + 1));
+      setSelectedIndex(prev => Math.max(0, Math.min(filteredDomains.length - 1, prev + 1)));
     } else if (key.pageUp) {
       setSelectedIndex(prev => Math.max(0, prev - 20));
     } else if (key.pageDown) {
-      setSelectedIndex(prev => Math.min(filteredDomains.length - 1, prev + 20));
+      setSelectedIndex(prev => Math.max(0, Math.min(filteredDomains.length - 1, prev + 20)));
     } else if (key.return) {
       const domain = filteredDomains.at(selectedIndex);
       if (domain) onOpenDomain(domain.domain);
