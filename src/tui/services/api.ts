@@ -354,26 +354,32 @@ export class TuiApiService {
     const result = await this.checkDomain(domain);
     if (result.status !== 'loaded' || !result.data) return undefined;
     const response = asRecord(result.data.response);
+    // additional has at most two known keys (renewal / transfer); iterate
+    // via Object.entries rather than bracket access on the dynamic kind.
     const additional = asRecord(response.additional);
-    const bucket = asRecord(additional[kind]);
-    return typeof bucket.price === 'string' ? bucket.price : undefined;
+    for (const [k, value] of Object.entries(additional)) {
+      if (k !== kind) continue;
+      const bucket = asRecord(value);
+      if (typeof bucket.price === 'string') return bucket.price;
+    }
+    return undefined;
   }
 
   // --- Pricing ---
 
-  async getPricing(): Promise<ResourceState<Record<string, { registration: string; renewal: string; transfer: string }>>> {
+  async getPricing(): Promise<ResourceState<Map<string, { registration: string; renewal: string; transfer: string }>>> {
     try {
       const data = await this.client.request(requireOperation('getPricing'));
       const record = asRecord(data);
       const pricing = asRecord(record.pricing);
-      const result: Record<string, { registration: string; renewal: string; transfer: string }> = {};
+      const result = new Map<string, { registration: string; renewal: string; transfer: string }>();
       for (const [tld, entry] of Object.entries(pricing)) {
         const r = asRecord(entry);
-        result[tld] = {
+        result.set(tld, {
           registration: String(r.registration ?? ''),
           renewal: String(r.renewal ?? ''),
           transfer: String(r.transfer ?? ''),
-        };
+        });
       }
       return { status: 'loaded', data: result, timestamp: Date.now() };
     } catch (error) {
@@ -401,8 +407,15 @@ export class TuiApiService {
     const maxSuffix = Math.min(labels.length - 1, 3);
     for (let suffixLen = maxSuffix; suffixLen >= 1; suffixLen--) {
       const candidate = labels.slice(-suffixLen).join('.');
-      const entry = result.data[candidate];
-      if (entry && entry[kind]) return entry[kind];
+      const entry = result.data.get(candidate);
+      if (!entry) continue;
+      // entry has three fixed keys; switch on kind rather than
+      // bracket access.
+      const price =
+        kind === 'registration' ? entry.registration :
+        kind === 'renewal' ? entry.renewal :
+        entry.transfer;
+      if (price) return price;
     }
     return undefined;
   }
