@@ -55,16 +55,42 @@ export function validateDnsRecordForm(values: DnsRecordFormValues): Record<strin
   return errors;
 }
 
-export function buildDnsRecordPayload(values: DnsRecordFormValues): Record<string, unknown> {
+export function buildDnsRecordPayload(values: DnsRecordFormValues, parentDomain?: string): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     type: values.type.toUpperCase(),
     content: values.content,
   };
-  if (values.name) payload.name = values.name;
+  const cleanedName = values.name.trim();
+  // Three forms all mean "apex / root record" — submit with no name field:
+  //   * empty
+  //   * the literal '@'
+  //   * equal to the parent domain (the FQDN returned by the read API
+  //     when the record IS the apex; e.g. "example.com" + parent "example.com")
+  const isApex =
+    !cleanedName ||
+    cleanedName === '@' ||
+    (!!parentDomain && cleanedName.toLowerCase() === parentDomain.toLowerCase());
+  if (!isApex) {
+    payload.name = parentDomain ? stripParentDomain(cleanedName, parentDomain) : cleanedName;
+  }
   if (values.ttl && isValidInteger(values.ttl)) payload.ttl = parseInt(values.ttl, 10);
   if (values.prio && isValidInteger(values.prio)) payload.prio = parseInt(values.prio, 10);
   if (values.notes) payload.notes = values.notes;
   return payload;
+}
+
+/**
+ * Remove the parent-domain suffix from a DNS record name. The read API returns
+ * fully qualified names (e.g. "www.example.com") but the write API expects the
+ * subdomain label ("www"); the apex record uses an empty/omitted name.
+ */
+export function stripParentDomain(name: string, parentDomain: string): string {
+  const suffix = `.${parentDomain.toLowerCase()}`;
+  const lower = name.toLowerCase();
+  if (lower.endsWith(suffix) && name.length > parentDomain.length + 1) {
+    return name.slice(0, -parentDomain.length - 1);
+  }
+  return name;
 }
 
 export function buildDnsRecordReview(domain: string, values: DnsRecordFormValues, isEdit: boolean): ReviewSnapshot {

@@ -4,6 +4,7 @@
  */
 import type { ApiClient } from '../../lib/api-client.js';
 import { requireOperation } from '../../lib/operations.js';
+import { stripParentDomain } from '../forms/validators.js';
 import type {
   NormalizedDomain,
   NormalizedDnsRecord,
@@ -147,7 +148,7 @@ export class TuiApiService {
         pathParams: { domain },
       });
       const record = asRecord(data);
-      const ns = asArray(record.ns).map(String);
+      const ns = asStringArray(record.ns);
       return { status: 'loaded', data: ns, timestamp: Date.now() };
     } catch (error) {
       return errorState(error);
@@ -174,7 +175,7 @@ export class TuiApiService {
         pathParams: { domain },
       });
       const record = asRecord(data);
-      const records = normalizeGlueResponse(record);
+      const records = normalizeGlueResponse(record, domain);
       return { status: 'loaded', data: records, timestamp: Date.now() };
     } catch (error) {
       return errorState(error);
@@ -342,6 +343,70 @@ export class TuiApiService {
     }
   }
 
+  /**
+   * Read the per-domain price for a given action from the checkDomain
+   * response. Porkbun returns additional.renewal.price and
+   * additional.transfer.price for the specific domain, which is the only
+   * correct source for premium and other non-default-priced domains
+   * (TLD-level /pricing/get is a fallback only).
+   */
+  async getDomainPriceFromCheck(domain: string, kind: 'renewal' | 'transfer'): Promise<string | undefined> {
+    const result = await this.checkDomain(domain);
+    if (result.status !== 'loaded' || !result.data) return undefined;
+    const response = asRecord(result.data.response);
+    const additional = asRecord(response.additional);
+    const bucket = asRecord(additional[kind]);
+    return typeof bucket.price === 'string' ? bucket.price : undefined;
+  }
+
+  // --- Pricing ---
+
+  async getPricing(): Promise<ResourceState<Record<string, { registration: string; renewal: string; transfer: string }>>> {
+    try {
+      const data = await this.client.request(requireOperation('getPricing'));
+      const record = asRecord(data);
+      const pricing = asRecord(record.pricing);
+      const result: Record<string, { registration: string; renewal: string; transfer: string }> = {};
+      for (const [tld, entry] of Object.entries(pricing)) {
+        const r = asRecord(entry);
+        result[tld] = {
+          registration: String(r.registration ?? ''),
+          renewal: String(r.renewal ?? ''),
+          transfer: String(r.transfer ?? ''),
+        };
+      }
+      return { status: 'loaded', data: result, timestamp: Date.now() };
+    } catch (error) {
+      return errorState(error);
+    }
+  }
+
+  /**
+   * Look up a price string for a domain from the pricing endpoint.
+   * Accepts a full domain like "example.co.uk" and resolves the longest
+   * matching TLD suffix against the pricing data, so multi-label TLDs
+   * (co.uk, com.au, co.jp, ...) hit the right key.
+   *
+   * Returns undefined when no matching TLD is present or the request
+   * failed. Callers that need the domain-specific price (e.g. premium
+   * domains) should prefer the per-domain checkDomain response.
+   */
+  async getTldPrice(domain: string, kind: 'registration' | 'renewal' | 'transfer'): Promise<string | undefined> {
+    const result = await this.getPricing();
+    if (result.status !== 'loaded' || !result.data) return undefined;
+    const labels = domain.toLowerCase().replace(/^\.+/, '').split('.').filter(Boolean);
+    if (labels.length < 2) return undefined;
+    // Walk the TLD suffix from longest to shortest, capped at 3 labels
+    // (covers virtually every public TLD: com, co.uk, com.au, co.jp, ...).
+    const maxSuffix = Math.min(labels.length - 1, 3);
+    for (let suffixLen = maxSuffix; suffixLen >= 1; suffixLen--) {
+      const candidate = labels.slice(-suffixLen).join('.');
+      const entry = result.data[candidate];
+      if (entry && entry[kind]) return entry[kind];
+    }
+    return undefined;
+  }
+
   // --- Registration ---
 
   async registerDomain(domain: string, cost: number, agreeToTerms: string): Promise<ResourceState<Record<string, unknown>>> {
@@ -489,7 +554,7 @@ function normalizeDnsRecord(raw: Record<string, unknown>): NormalizedDnsRecord {
   };
 }
 
-function normalizeGlueResponse(record: Record<string, unknown>): NormalizedGlueRecord[] {
+function normalizeGlueResponse(record: Record<string, unknown>, parentDomain: string): NormalizedGlueRecord[] {
   const hosts = record.hosts ?? record.records;
   if (!hosts) return [];
 
@@ -499,11 +564,11 @@ function normalizeGlueResponse(record: Record<string, unknown>): NormalizedGlueR
       if (Array.isArray(entry) && entry.length >= 2) {
         const hostname = String(entry[0] ?? '');
         const data = asRecord(entry[1] ?? {});
-        const ipv4 = asArray(data.v4 ?? data.ipv4).map(String);
-        const ipv6 = asArray(data.v6 ?? data.ipv6).map(String);
+        const ipv4 = asStringArray(data.v4 ?? data.ipv4);
+        const ipv6 = asStringArray(data.v6 ?? data.ipv6);
         return {
           hostname,
-          subdomain: hostname,
+          subdomain: stripParentDomain(hostname, parentDomain),
           ipv4,
           ipv6,
           ips: [...ipv4, ...ipv6],
@@ -515,7 +580,7 @@ function normalizeGlueResponse(record: Record<string, unknown>): NormalizedGlueR
       const subdomain = String(r.subdomain ?? '');
       const ips = asArray(r.ips).map(String);
       return {
-        hostname: subdomain,
+        hostname: subdomain ? `${subdomain}.${parentDomain}` : parentDomain,
         subdomain,
         ipv4: ips.filter(ip => !ip.includes(':')),
         ipv6: ips.filter(ip => ip.includes(':')),
@@ -606,6 +671,11 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function asArray(value: unknown): Array<Record<string, unknown>> {
   if (Array.isArray(value)) return value.filter(v => typeof v === 'object' && v !== null) as Array<Record<string, unknown>>;
+  return [];
+}
+
+function asStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String);
   return [];
 }
 

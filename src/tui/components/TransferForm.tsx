@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { TuiApiService } from '../services/api.js';
+import { priceStringToCents } from '../forms/validators.js';
 
 export interface TransferFormProps {
   theme: any;
@@ -39,24 +40,24 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
     setError(null);
 
     try {
-      const result = await service.checkDomain(domain);
-      if (result.status === 'loaded' && result.data) {
-        const response = result.data.response as any;
-        const transferCost = response?.additional?.price?.transfer;
-        
-        if (transferCost) {
-          setPricing({
-            cost: Math.round(parseFloat(transferCost) * 100),
-          });
-          setStep('confirm');
-        } else {
-          setPricing({
-            reason: 'Transfer pricing not available from API',
-          });
-          setError('Transfer pricing not available. Please check the Porkbun website.');
-        }
-      } else if (result.error) {
-        setError(result.error.message);
+      // Prefer the per-domain transfer price from checkDomain; fall back to
+      // the generic TLD tariff only if the per-domain price is missing.
+      let priceStr: string | undefined;
+      try {
+        priceStr = await service.getDomainPriceFromCheck(domain, 'transfer');
+      } catch {
+        priceStr = undefined;
+      }
+      if (!priceStr) {
+        priceStr = await service.getTldPrice(domain, 'transfer');
+      }
+      const parsed = priceStr ? priceStringToCents(priceStr) : undefined;
+      if (parsed !== undefined) {
+        setPricing({ cost: parsed });
+        setStep('confirm');
+      } else {
+        setPricing({ reason: 'Transfer pricing not available from API' });
+        setError('Transfer pricing not available. Please check the Porkbun website.');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

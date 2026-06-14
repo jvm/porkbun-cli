@@ -62,6 +62,8 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
 
       if (sslBundle.privateKey) {
         await writeFile(keyPath, sslBundle.privateKey, { mode: 0o600 });
+        // writeFile's mode option is only honored on create; re-apply for overwrites.
+        await chmod(keyPath, 0o600);
       }
 
       if (sslBundle.publicKey) {

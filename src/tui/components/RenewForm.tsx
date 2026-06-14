@@ -3,6 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { NormalizedDomain } from '../types.js';
 import type { TuiApiService } from '../services/api.js';
+import { priceStringToCents } from '../forms/validators.js';
 
 export interface RenewFormProps {
   theme: any;
@@ -28,22 +29,27 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
   useEffect(() => {
     const checkPricing = async () => {
       try {
-        const result = await service.checkDomain(domain.domain);
-        if (result.status === 'loaded' && result.data) {
-          const response = result.data.response as any;
-          const renewalCost = response?.additional?.price?.renewal;
-          
-          if (renewalCost) {
-            setPricing({
-              cost: Math.round(parseFloat(renewalCost) * 100),
-            });
-          } else {
-            setPricing({
-              reason: 'Renewal pricing not available from API. Please check the Porkbun website.',
-            });
-          }
-        } else if (result.error) {
-          setError(result.error.message);
+        // Prefer the per-domain renewal price from checkDomain — it reflects
+        // premium or otherwise domain-specific pricing. The /pricing/get
+        // endpoint only exposes the generic TLD tariff, which can be wrong
+        // for premium names and is also rejected by the renew endpoint
+        // when it does not match the exact domain total.
+        let priceStr: string | undefined;
+        try {
+          priceStr = await service.getDomainPriceFromCheck(domain.domain, 'renewal');
+        } catch {
+          priceStr = undefined;
+        }
+        if (!priceStr) {
+          priceStr = await service.getTldPrice(domain.domain, 'renewal');
+        }
+        const parsed = priceStr ? priceStringToCents(priceStr) : undefined;
+        if (parsed !== undefined) {
+          setPricing({ cost: parsed });
+        } else {
+          setPricing({
+            reason: 'Renewal pricing not available from API. Please check the Porkbun website.',
+          });
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
