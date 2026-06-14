@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Theme } from '../theme.js';
 import type { TuiApiService } from '../services/api.js';
-import type { NormalizedDomain, NormalizedDnsRecord, NormalizedGlueRecord, NormalizedForward, NormalizedDnssecRecord, ReviewSnapshot, ConfirmationLevel } from '../types.js';
+import type { NormalizedDomain, NormalizedDnsRecord, NormalizedGlueRecord, NormalizedForward, NormalizedDnssecRecord, ReviewSnapshot } from '../types.js';
 import { LoadingState, ErrorState, EmptyState } from '../components/StatusComponents.js';
 import { VirtualList } from '../components/VirtualList.js';
 import { DnsRecordForm } from '../components/DnsRecordForm.js';
@@ -20,8 +20,6 @@ import { NameserverForm } from '../components/NameserverForm.js';
 import { SslTab } from '../components/SslTab.js';
 import { TransferTab } from '../components/TransferTab.js';
 import { RenewForm } from '../components/RenewForm.js';
-import { deterministicIdempotencyKey } from '../../lib/api-client.js';
-import { requireOperation } from '../../lib/operations.js';
 import { useMutation } from '../hooks/useMutation.js';
 
 interface DomainDetailScreenProps {
@@ -221,7 +219,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
 
       {/* Tabs */}
       <Box marginBottom={1}>
-        {TABS.map((tab, i) => (
+        {TABS.map((tab) => (
           <Box key={tab} marginRight={1}>
             <Text
               bold={tab === activeTab}
@@ -310,7 +308,6 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             onSubmit={(formData) => {
               setDnsFormData(formData);
               const operationName = dnsMode === 'create' ? 'Create DNS Record' : 'Edit DNS Record';
-              const classification: ConfirmationLevel = 'standard';
               const details = Object.entries(formData).map(([key, value]) => ({
                 label: key,
                 value: String(value ?? ''),
@@ -874,10 +871,10 @@ function DnsTab({
       setSelectedIndex(prev => Math.min(records.length - 1, prev + 1));
     } else if (input === 'c' && onCreate) {
       onCreate();
-    } else if (input === 'e' && onEdit && records[selectedIndex]) {
-      onEdit(records[selectedIndex]);
-    } else if (input === 'd' && onDelete && records[selectedIndex]) {
-      onDelete(records[selectedIndex]);
+    } else if (input === 'e' && onEdit && records.at(selectedIndex)) {
+      onEdit(records.at(selectedIndex)!);
+    } else if (input === 'd' && onDelete && records.at(selectedIndex)) {
+      onDelete(records.at(selectedIndex)!);
     }
   });
 
@@ -968,14 +965,6 @@ function NameserversTab({
           <Text dimColor>Press 'e' to edit nameservers</Text>
         </Box>
       )}
-    </Box>
-  );
-}
-
-function PlaceholderTab({ name, theme }: { name: string; theme: Theme }) {
-  return (
-    <Box>
-      <Text dimColor>{name} tab - implementation pending.</Text>
     </Box>
   );
 }

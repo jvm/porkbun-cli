@@ -160,9 +160,9 @@ describe('TUI API Service Integration', () => {
 
       assert.strictEqual(result.status, 'loaded');
       assert.ok(result.data);
-      assert.strictEqual(result.data.com.registration, '9.68');
-      assert.strictEqual(result.data.com.renewal, '9.68');
-      assert.strictEqual(result.data.com.transfer, '9.68');
+      assert.strictEqual(result.data.get('com')?.registration, '9.68');
+      assert.strictEqual(result.data.get('com')?.renewal, '9.68');
+      assert.strictEqual(result.data.get('com')?.transfer, '9.68');
 
       const tldPrice = await service.getTldPrice('example.com', 'renewal');
       assert.strictEqual(tldPrice, '9.68');

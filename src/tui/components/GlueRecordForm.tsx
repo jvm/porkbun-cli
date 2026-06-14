@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { NormalizedGlueRecord } from '../types.js';
+import type { Theme } from '../theme.js';
 
 export interface GlueRecordFormProps {
-  theme: any;
+  theme: Theme;
   mode: 'create' | 'edit';
   initialRecord?: NormalizedGlueRecord;
   // When the user returns to the form from the confirmation step ('b'),

@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { NormalizedTransfer } from '../types.js';
 import type { TuiApiService } from '../services/api.js';
+import type { Theme } from '../theme.js';
 
 export interface TransferTabProps {
   domain: string;
   service: TuiApiService;
-  theme: any;
+  theme: Theme;
 }
 
 export function TransferTab({ domain, service, theme }: TransferTabProps) {
@@ -20,14 +21,20 @@ export function TransferTab({ domain, service, theme }: TransferTabProps) {
     try {
       const result = await service.getTransfer(domain);
       if (result.data) {
-        const data = result.data as any;
+        const data = result.data as {
+          domain?: unknown;
+          status?: unknown;
+          statusDescription?: unknown;
+          transferDate?: unknown;
+          orderId?: unknown;
+        };
         setTransfer({
           domain: String(data.domain || ''),
           status: String(data.status || ''),
           statusDescription: data.statusDescription ? String(data.statusDescription) : undefined,
           transferDate: data.transferDate ? String(data.transferDate) : undefined,
           orderId: data.orderId ? String(data.orderId) : undefined,
-          raw: data,
+          raw: result.data,
         });
       } else if (result.error) {
         setError(result.error.message);
@@ -56,7 +63,7 @@ export function TransferTab({ domain, service, theme }: TransferTabProps) {
   if (error) {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text color={theme.colors.error}>Error: {error}</Text>
+        <Text color={theme.colors.danger}>Error: {error}</Text>
         <Text dimColor>Press 'r' to retry.</Text>
       </Box>
     );

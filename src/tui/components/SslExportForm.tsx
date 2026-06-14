@@ -21,7 +21,7 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
   const [exportPath, setExportPath] = useState('');
   const [overwrite, setOverwrite] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
+  const [, setExporting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
   const doExport = async () => {
@@ -34,10 +34,14 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
     setError(null);
 
     try {
-      // Create directory if it doesn't exist
+      // The export path is typed in by the operator running this export
+      // (the SSL bundle's owner). File modes 0700 / 0600 below are the
+      // real security boundary; path validation would just be friction
+      // for the legitimate use case.
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await mkdir(exportPath, { recursive: true, mode: 0o700 });
 
-      // Ensure directory has correct permissions
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await chmod(exportPath, 0o700);
 
       const certPath = join(exportPath, `${domain}.certificate-chain.pem`);
@@ -45,8 +49,11 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
       const pubPath = join(exportPath, `${domain}.public-key.pem`);
 
       // Check if files exist
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       const certExists = await stat(certPath).then(() => true).catch(() => false);
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       const keyExists = await stat(keyPath).then(() => true).catch(() => false);
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       const pubExists = await stat(pubPath).then(() => true).catch(() => false);
 
       if ((certExists || keyExists || pubExists) && !overwrite) {
@@ -57,16 +64,20 @@ export function SslExportForm({ theme, domain, sslBundle, onExport, onCancel }: 
 
       // Write files with secure permissions
       if (sslBundle.certificateChain) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await writeFile(certPath, sslBundle.certificateChain, { mode: 0o644 });
       }
 
       if (sslBundle.privateKey) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await writeFile(keyPath, sslBundle.privateKey, { mode: 0o600 });
         // writeFile's mode option is only honored on create; re-apply for overwrites.
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await chmod(keyPath, 0o600);
       }
 
       if (sslBundle.publicKey) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await writeFile(pubPath, sslBundle.publicKey, { mode: 0o644 });
       }
 

@@ -246,6 +246,10 @@ export function buildUrl(baseUrl: string, path: string, query: Record<string, un
 }
 
 export function fillPath(path: string, params: Record<string, unknown>): string {
+  // Convert to a Map once so the per-key lookups below are not flagged
+  // by eslint-plugin-security's detect-object-injection rule. The Map
+  // is throwaway; it doesn't outlive this function.
+  const paramMap = new Map<string, unknown>(Object.entries(params));
   let result = "";
   let cursor = 0;
 
@@ -270,7 +274,7 @@ export function fillPath(path: string, params: Record<string, unknown>): string 
       continue;
     }
 
-    const value = params[key];
+    const value = paramMap.get(key);
     if (value === undefined || value === null) {
       throw new CliError({
         kind: "usage",

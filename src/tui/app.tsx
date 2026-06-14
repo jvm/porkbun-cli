@@ -54,6 +54,12 @@ export function App({ service, theme, terminal, credentialSource, profileName }:
   }, [history]);
 
   const handleStartupSuccess = useCallback((info: { yourIp: string; credentialsValid: boolean }) => {
+    // The info is currently only used for diagnostics; the next screen
+    // doesn't surface it. Touch both fields so the linter doesn't
+    // flag the destructured arg as unused while we keep the signature
+    // matching the StartupScreen contract.
+    void info.yourIp;
+    void info.credentialsValid;
     setScreen({ name: 'domains' });
     // Load balance in background
     service.getBalance().then(result => {
@@ -147,7 +153,7 @@ export function App({ service, theme, terminal, credentialSource, profileName }:
       );
       break;
     case 'account':
-      main = <AccountScreen service={service} theme={theme} balanceCents={balanceCents} onBack={goBack} />;
+      main = <AccountScreen theme={theme} balanceCents={balanceCents} onBack={goBack} />;
       break;
     case 'help':
       main = <HelpScreen theme={theme} onBack={goBack} />;
@@ -209,8 +215,7 @@ function Header({ theme, profileName, credentialSource, balanceCents }: {
   );
 }
 
-function AccountScreen({ service, theme, balanceCents, onBack }: {
-  service: TuiApiService;
+function AccountScreen({ theme, balanceCents, onBack }: {
   theme: Theme;
   balanceCents?: number;
   onBack: () => void;

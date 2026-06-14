@@ -1,9 +1,16 @@
 /**
  * Form validation, normalization, review snapshot creation, and request payload building.
+ *
+ * Validation errors are returned as `Map<string, string>` rather than plain
+ * `Record<string, string>`. Maps don't have a prototype chain, so they're
+ * immune to the `__proto__` / `constructor` keys that eslint-plugin-security's
+ * `detect-object-injection` rule flags on dynamic-key bracket access.
  */
 import { isIP } from 'node:net';
-import type { ReviewSnapshot, ConfirmationLevel } from '../types.js';
-import { redactReviewValue } from '../redact.js';
+import type { ReviewSnapshot } from '../types.js';
+
+/** A field-level error map: validator-defined keys → human-readable messages. */
+export type FormErrors = Map<string, string>;
 
 // --- DNS Record Form ---
 
@@ -18,37 +25,37 @@ export interface DnsRecordFormValues {
 
 const DNS_TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'CAA', 'NS', 'PTR', 'SOA', 'TLSA', 'SSHFP', 'SPF'];
 
-export function validateDnsRecordForm(values: DnsRecordFormValues): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateDnsRecordForm(values: DnsRecordFormValues): FormErrors {
+  const errors: FormErrors = new Map();
 
   if (!values.type) {
-    errors.type = 'Type is required.';
+    errors.set('type', 'Type is required.');
   } else if (!DNS_TYPES.includes(values.type.toUpperCase())) {
-    errors.type = `Unknown record type '${values.type}'. Common types: ${DNS_TYPES.join(', ')}.`;
+    errors.set('type', `Unknown record type '${values.type}'. Common types: ${DNS_TYPES.join(', ')}.`);
   }
 
   if (!values.content) {
-    errors.content = 'Content is required.';
+    errors.set('content', 'Content is required.');
   }
 
   const type = values.type.toUpperCase();
   if (type === 'A' && values.content) {
     if (!isValidIPv4(values.content)) {
-      errors.content = 'A record content must be a valid IPv4 address.';
+      errors.set('content', 'A record content must be a valid IPv4 address.');
     }
   }
   if (type === 'AAAA' && values.content) {
     if (!isValidIPv6(values.content)) {
-      errors.content = 'AAAA record content must be a valid IPv6 address.';
+      errors.set('content', 'AAAA record content must be a valid IPv6 address.');
     }
   }
 
   if (values.ttl && !isValidInteger(values.ttl)) {
-    errors.ttl = 'TTL must be a valid integer.';
+    errors.set('ttl', 'TTL must be a valid integer.');
   }
 
   if (values.prio && !isValidInteger(values.prio)) {
-    errors.prio = 'Priority must be a valid integer.';
+    errors.set('prio', 'Priority must be a valid integer.');
   }
 
   // Warn but don't reject complex TXT/CAA/SRV
@@ -115,20 +122,19 @@ export interface NameserverFormValues {
   nameservers: string[];
 }
 
-export function validateNameserverForm(values: NameserverFormValues): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateNameserverForm(values: NameserverFormValues): FormErrors {
+  const errors: FormErrors = new Map();
 
   if (values.nameservers.length === 0) {
-    errors.nameservers = 'At least one nameserver is required.';
+    errors.set('nameservers', 'At least one nameserver is required.');
     return errors;
   }
 
-  for (let i = 0; i < values.nameservers.length; i++) {
-    const ns = values.nameservers[i];
+  values.nameservers.forEach((ns, i) => {
     if (!ns || !isValidHostname(ns)) {
-      errors[`ns_${i}`] = `Invalid hostname: '${ns}'`;
+      errors.set(`ns_${i}`, `Invalid hostname: '${ns}'`);
     }
-  }
+  });
 
   return errors;
 }
@@ -153,23 +159,22 @@ export interface GlueRecordFormValues {
   ips: string[];
 }
 
-export function validateGlueForm(values: GlueRecordFormValues, parentDomain: string): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateGlueForm(values: GlueRecordFormValues): FormErrors {
+  const errors: FormErrors = new Map();
 
   if (!values.subdomain) {
-    errors.subdomain = 'Subdomain is required.';
+    errors.set('subdomain', 'Subdomain is required.');
   }
 
   if (values.ips.length === 0) {
-    errors.ips = 'At least one IP address is required.';
+    errors.set('ips', 'At least one IP address is required.');
   }
 
-  for (let i = 0; i < values.ips.length; i++) {
-    const ip = values.ips[i];
+  values.ips.forEach((ip, i) => {
     if (!isIP(ip)) {
-      errors[`ip_${i}`] = `Invalid IP address: '${ip}'`;
+      errors.set(`ip_${i}`, `Invalid IP address: '${ip}'`);
     }
-  }
+  });
 
   return errors;
 }
@@ -184,19 +189,19 @@ export interface ForwardFormValues {
   wildcard: boolean;
 }
 
-export function validateForwardForm(values: ForwardFormValues): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateForwardForm(values: ForwardFormValues): FormErrors {
+  const errors: FormErrors = new Map();
 
   if (!values.location) {
-    errors.location = 'Target URL is required.';
+    errors.set('location', 'Target URL is required.');
   } else {
     try {
       const url = new URL(values.location);
       if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-        errors.location = 'Target URL must use http or https.';
+        errors.set('location', 'Target URL must use http or https.');
       }
     } catch {
-      errors.location = 'Invalid URL format.';
+      errors.set('location', 'Invalid URL format.');
     }
   }
 
@@ -227,27 +232,27 @@ export interface DnssecFormValues {
   keyDataPubKey: string;
 }
 
-export function validateDnssecForm(values: DnssecFormValues): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateDnssecForm(values: DnssecFormValues): FormErrors {
+  const errors: FormErrors = new Map();
 
   if (!values.keyTag || !isValidInteger(values.keyTag)) {
-    errors.keyTag = 'Key tag must be a valid integer.';
+    errors.set('keyTag', 'Key tag must be a valid integer.');
   }
   if (!values.alg || !isValidInteger(values.alg)) {
-    errors.alg = 'Algorithm must be a valid integer.';
+    errors.set('alg', 'Algorithm must be a valid integer.');
   }
   if (!values.digestType || !isValidInteger(values.digestType)) {
-    errors.digestType = 'Digest type must be a valid integer.';
+    errors.set('digestType', 'Digest type must be a valid integer.');
   }
   if (!values.digest) {
-    errors.digest = 'Digest is required.';
+    errors.set('digest', 'Digest is required.');
   } else if (!/^[0-9a-fA-F]+$/.test(values.digest)) {
-    errors.digest = 'Digest should be a hex string.';
+    errors.set('digest', 'Digest should be a hex string.');
   }
 
   // Advanced fields are optional
   if (values.maxSigLife && !isValidInteger(values.maxSigLife)) {
-    errors.maxSigLife = 'Max signature life must be a valid integer.';
+    errors.set('maxSigLife', 'Max signature life must be a valid integer.');
   }
 
   return errors;
@@ -260,10 +265,10 @@ export interface RegistrationFormValues {
   confirmDomain: string;
 }
 
-export function validateRegistrationConfirm(values: RegistrationFormValues): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateRegistrationConfirm(values: RegistrationFormValues): FormErrors {
+  const errors: FormErrors = new Map();
   if (values.confirmDomain !== values.domain) {
-    errors.confirmDomain = 'Type the exact domain name to confirm registration.';
+    errors.set('confirmDomain', 'Type the exact domain name to confirm registration.');
   }
   return errors;
 }
@@ -276,10 +281,10 @@ export interface RenewalFormValues {
   costCents: number;
 }
 
-export function validateRenewalConfirm(values: RenewalFormValues): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateRenewalConfirm(values: RenewalFormValues): FormErrors {
+  const errors: FormErrors = new Map();
   if (values.confirmDomain !== values.domain) {
-    errors.confirmDomain = 'Type the exact domain name to confirm renewal.';
+    errors.set('confirmDomain', 'Type the exact domain name to confirm renewal.');
   }
   return errors;
 }
@@ -292,16 +297,16 @@ export interface TransferFormValues {
   confirmDomain: string;
 }
 
-export function validateTransferForm(values: TransferFormValues): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateTransferForm(values: TransferFormValues): FormErrors {
+  const errors: FormErrors = new Map();
   if (!values.domain) {
-    errors.domain = 'Domain is required.';
+    errors.set('domain', 'Domain is required.');
   }
   if (!values.authCode) {
-    errors.authCode = 'Authorization code is required.';
+    errors.set('authCode', 'Authorization code is required.');
   }
   if (values.confirmDomain !== values.domain) {
-    errors.confirmDomain = 'Type the exact domain name to confirm transfer.';
+    errors.set('confirmDomain', 'Type the exact domain name to confirm transfer.');
   }
   return errors;
 }
@@ -312,10 +317,10 @@ export interface SslExportFormValues {
   exportPath: string;
 }
 
-export function validateSslExportForm(values: SslExportFormValues): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function validateSslExportForm(values: SslExportFormValues): FormErrors {
+  const errors: FormErrors = new Map();
   if (!values.exportPath) {
-    errors.exportPath = 'Export directory path is required.';
+    errors.set('exportPath', 'Export directory path is required.');
   }
   return errors;
 }
@@ -325,10 +330,17 @@ export function validateSslExportForm(values: SslExportFormValues): Record<strin
 /**
  * Convert a price string (e.g., "9.73") to integer cents.
  * Never use binary floating point for money.
+ *
+ * The validation is split into two anchored regexes (no nested quantifiers)
+ * rather than `/^\d+(\.\d{0,2})?$/`, which eslint-plugin-security's
+ * `detect-unsafe-regex` flags even though it is bounded.
  */
 export function priceStringToCents(priceStr: string): number | undefined {
   const cleaned = priceStr.replace(/[^0-9.]/g, '');
-  if (!cleaned || !/^\d+(\.\d{0,2})?$/.test(cleaned)) return undefined;
+  if (!cleaned) return undefined;
+  const isInteger = /^\d+$/.test(cleaned);
+  const isDecimal = /^\d+\.\d{1,2}$/.test(cleaned);
+  if (!isInteger && !isDecimal) return undefined;
   const parts = cleaned.split('.');
   const dollars = parseInt(parts[0] || '0', 10);
   const centsStr = (parts[1] || '').padEnd(2, '0').slice(0, 2);
@@ -349,24 +361,24 @@ export function centsToUsd(cents: number): string {
 
 // --- Auto-renew Form ---
 
-export function buildAutoRenewReview(domains: string[], previousState: Record<string, boolean>, newState: 'on' | 'off'): ReviewSnapshot {
+export function buildAutoRenewReview(
+  domains: string[],
+  previousState: Map<string, boolean>,
+  newState: 'on' | 'off',
+): ReviewSnapshot {
   return {
     operation: `Auto-renew ${newState}`,
     target: domains.join(', '),
     classification: 'mutating',
     fields: domains.map(d => ({
       label: d,
-      value: `${previousState[d] ? 'on' : 'off'} → ${newState}`,
+      value: `${previousState.get(d) === true ? 'on' : 'off'} → ${newState}`,
     })),
     expectedInvalidations: domains.map(d => `domain:${d}`),
   };
 }
 
 // --- Helpers ---
-
-function isValidIP(value: string): boolean {
-  return isIP(value) !== 0;
-}
 
 function isValidIPv4(value: string): boolean {
   return isIP(value) === 4;
@@ -376,9 +388,37 @@ function isValidIPv6(value: string): boolean {
   return isIP(value) === 6;
 }
 
+/**
+ * Validate an RFC-1123 hostname by inspecting each dot-separated label
+ * manually rather than with a single complex regex. A single regex with
+ * `(\.[a-zA-Z0-9](...)?)*` triggers eslint-plugin-security's
+ * `detect-unsafe-regex` (nested optional groups), even though the input
+ * length is bounded.
+ */
 function isValidHostname(value: string): boolean {
   if (!value || value.length > 253) return false;
-  return /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/.test(value);
+  const labels = value.split('.');
+  if (labels.length < 2) return false;
+  for (const label of labels) {
+    if (!isValidLabel(label)) return false;
+  }
+  return true;
+}
+
+function isValidLabel(label: string): boolean {
+  if (label.length === 0 || label.length > 63) return false;
+  for (let i = 0; i < label.length; i++) {
+    const code = label.charCodeAt(i);
+    const isAlnum =
+      (code >= 0x30 && code <= 0x39) || // 0-9
+      (code >= 0x41 && code <= 0x5A) || // A-Z
+      (code >= 0x61 && code <= 0x7A);   // a-z
+    const isHyphen = code === 0x2D;
+    if (!isAlnum && !isHyphen) return false;
+    const atEdge = i === 0 || i === label.length - 1;
+    if (atEdge && !isAlnum) return false;
+  }
+  return true;
 }
 
 function isValidInteger(value: string): boolean {

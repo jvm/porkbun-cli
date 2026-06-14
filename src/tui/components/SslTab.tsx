@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { NormalizedSslBundle } from '../types.js';
 import type { TuiApiService } from '../services/api.js';
+import type { Theme } from '../theme.js';
 import { SslExportForm } from './SslExportForm.js';
 
 export interface SslTabProps {
   domain: string;
   service: TuiApiService;
-  theme: any;
+  theme: Theme;
 }
 
 export function SslTab({ domain, service, theme }: SslTabProps) {
@@ -53,7 +54,7 @@ export function SslTab({ domain, service, theme }: SslTabProps) {
   if (error) {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text color={theme.colors.error}>Error: {error}</Text>
+        <Text color={theme.colors.danger}>Error: {error}</Text>
         <Text dimColor>Press 'r' to retry.</Text>
       </Box>
     );

@@ -48,7 +48,7 @@ export function CommandPalette({ theme, commands, onClose }: CommandPaletteProps
     } else if (key.downArrow && selectedIndex < filteredCommands.length - 1) {
       setSelectedIndex(prev => prev + 1);
     } else if (key.return) {
-      const cmd = filteredCommands[selectedIndex];
+      const cmd = filteredCommands.at(selectedIndex);
       if (cmd && !cmd.disabled) {
         onClose();
         cmd.onExecute();

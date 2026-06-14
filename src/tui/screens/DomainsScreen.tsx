@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Theme } from '../theme.js';
 import type { TuiApiService } from '../services/api.js';
-import type { NormalizedDomain, ReviewSnapshot, ConfirmationLevel } from '../types.js';
+import type { NormalizedDomain, ReviewSnapshot } from '../types.js';
 import { VirtualList } from '../components/VirtualList.js';
 import { LoadingState, ErrorState, EmptyState, StaleBanner } from '../components/StatusComponents.js';
 import { MutationConfirm } from '../components/MutationConfirm.js';
@@ -19,6 +19,7 @@ interface DomainsScreenProps {
   onOpenTransfers: () => void;
   onOpenRegister: () => void;
   onOpenAccount: () => void;
+  // onOpenHelp reserved for a future "?" shortcut in the command palette
   onOpenHelp: () => void;
   balanceCents?: number;
 }
@@ -28,6 +29,9 @@ type SearchPhase = 'inactive' | 'active';
 const FRESHNESS_WINDOW_MS = 30_000;
 
 export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, onOpenRegister, onOpenAccount, onOpenHelp, balanceCents }: DomainsScreenProps) {
+  // onOpenHelp is part of the public prop contract for a future
+  // command palette binding; the screen body doesn't invoke it yet.
+  void onOpenHelp;
   const [domains, setDomains] = useState<NormalizedDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | undefined>();
@@ -169,7 +173,7 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
     if (char === 'a' || char === 'A') {
       const targets = selectedDomains.size > 0 
         ? Array.from(selectedDomains) 
-        : filteredDomains[selectedIndex] ? [filteredDomains[selectedIndex].domain] : [];
+        : filteredDomains.at(selectedIndex) ? [filteredDomains.at(selectedIndex)!.domain] : [];
       
       if (targets.length > 0) {
         // Determine new state (toggle based on first domain's current state)
@@ -204,10 +208,10 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
     } else if (key.pageDown) {
       setSelectedIndex(prev => Math.min(filteredDomains.length - 1, prev + 20));
     } else if (key.return) {
-      const domain = filteredDomains[selectedIndex];
+      const domain = filteredDomains.at(selectedIndex);
       if (domain) onOpenDomain(domain.domain);
     } else if (char === ' ') {
-      const domain = filteredDomains[selectedIndex];
+      const domain = filteredDomains.at(selectedIndex);
       if (domain) {
         setSelectedDomains(prev => {
           const next = new Set(prev);
@@ -254,7 +258,7 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
       description: 'Open the selected domain for editing',
       classification: 'read-only',
       onExecute: () => {
-        const domain = filteredDomains[selectedIndex];
+        const domain = filteredDomains.at(selectedIndex);
         if (domain) onOpenDomain(domain.domain);
       },
     },

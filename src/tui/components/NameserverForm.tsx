@@ -42,9 +42,11 @@ export function NameserverForm({ theme, initialNameservers, onSubmit, onCancel }
   });
 
   const updateNameserver = (index: number, value: string) => {
-    const newNameservers = [...nameservers];
-    newNameservers[index] = value;
-    setNameservers(newNameservers);
+    setNameservers([
+      ...nameservers.slice(0, index),
+      value,
+      ...nameservers.slice(index + 1),
+    ]);
   };
 
   return (

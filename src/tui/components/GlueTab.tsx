@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { NormalizedGlueRecord } from '../types.js';
+import type { Theme } from '../theme.js';
 
 export interface GlueTabProps {
   records: NormalizedGlueRecord[];
-  theme: any;
+  theme: Theme;
   onCreate: () => void;
   onEdit: (record: NormalizedGlueRecord) => void;
   onDelete: (record: NormalizedGlueRecord) => void;
@@ -19,13 +20,13 @@ export function GlueTab({ records, theme, onCreate, onEdit, onDelete }: GlueTabP
       return;
     }
 
-    if (input === 'e' && records[selectedIndex]) {
-      onEdit(records[selectedIndex]);
+    if (input === 'e' && records.at(selectedIndex)) {
+      onEdit(records.at(selectedIndex)!);
       return;
     }
 
-    if (input === 'd' && records[selectedIndex]) {
-      onDelete(records[selectedIndex]);
+    if (input === 'd' && records.at(selectedIndex)) {
+      onDelete(records.at(selectedIndex)!);
       return;
     }
 

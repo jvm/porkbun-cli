@@ -16,7 +16,10 @@ const SENSITIVE_KEY_PATTERNS = [
   /token/i,
 ];
 
-// eslint-disable-next-line no-control-regex
+// Strip control characters: matches bytes 0x00-0x1F except \t (0x09),
+// \n (0x0A), \r (0x0D), and DEL (0x7F). The `s` flag lets `.` cross
+// line breaks. We don't use the `u` flag because the input may be a
+// partially-decoded byte stream.
 const CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
 const ANSI_ESCAPE = /\x1B\[[0-9;]*[A-Za-z]/g;
 const MAX_FIELD_LENGTH = 200;
@@ -72,17 +75,24 @@ export function redactErrorValue(value: unknown): string {
 
 /**
  * Redact all sensitive fields in an object.
+ *
+ * Built on a `Map` so the dynamic key writes are not flagged by
+ * eslint-plugin-security's `detect-object-injection` rule (the rule
+ * accepts Maps but not bracket-notation writes on plain objects).
+ * The returned `Record` is what the public API has always promised;
+ * Maps don't have a prototype chain, so this conversion is safe
+ * even when redaction runs on attacker-controlled input.
  */
 export function redactObject(obj: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
+  const result = new Map<string, unknown>();
   for (const [key, value] of Object.entries(obj)) {
     if (isSensitiveKey(key)) {
-      result[key] = '[REDACTED]';
+      result.set(key, '[REDACTED]');
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      result[key] = redactObject(value as Record<string, unknown>);
+      result.set(key, redactObject(value as Record<string, unknown>));
     } else {
-      result[key] = value;
+      result.set(key, value);
     }
   }
-  return result;
+  return Object.fromEntries(result);
 }

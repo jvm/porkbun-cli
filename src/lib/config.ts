@@ -19,7 +19,7 @@ export interface Profile {
 
 export interface ConfigFile {
   activeProfile?: string;
-  profiles: Record<string, Profile>;
+  profiles: Map<string, Profile>;
 }
 
 export interface CredentialInput {
@@ -40,11 +40,14 @@ export function configPath(): string {
 export async function readConfig(): Promise<ConfigFile> {
   const path = configPath();
   try {
+    // Path comes from PORKBUN_CONFIG_FILE / XDG_CONFIG_HOME / ~/.config.
+    // All three are operator-controlled environment, not attacker input.
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     const contents = await readFile(path, "utf8");
     return parseConfig(JSON.parse(contents));
   } catch (error) {
     if (isNodeError(error) && error.code === "ENOENT") {
-      return { profiles: {} };
+      return { profiles: new Map() };
     }
     throw new CliError({
       kind: "usage",
@@ -57,11 +60,24 @@ export async function readConfig(): Promise<ConfigFile> {
 export async function writeConfig(config: ConfigFile): Promise<void> {
   const path = configPath();
   const directory = dirname(path);
+  // The directory is derived from configPath() (operator-controlled env).
+  // File modes 0700 / 0600 below are the security boundary.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const tmpPath = `${path}.${process.pid}.tmp`;
-  await writeFile(tmpPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  // JSON.stringify doesn't serialize Maps; convert at the persistence
+  // boundary so the on-disk format stays a plain object.
+  const serialized = {
+    ...config,
+    profiles: Object.fromEntries(config.profiles),
+  };
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
+  await writeFile(tmpPath, `${JSON.stringify(serialized, null, 2)}\n`, { mode: 0o600 });
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await chmod(tmpPath, 0o600);
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await rename(tmpPath, path);
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await chmod(path, 0o600);
 }
 
@@ -74,13 +90,13 @@ export async function saveProfile(
   const name = validateProfileName(profileName || DEFAULT_PROFILE);
   const config = await readConfig();
   const now = new Date().toISOString();
-  const existing = Object.hasOwn(config.profiles, name) ? config.profiles[name] : undefined;
-  config.profiles[name] = {
+  const existing = config.profiles.get(name);
+  config.profiles.set(name, {
     apiKey,
     secretApiKey,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now
-  };
+  });
   if (makeActive) config.activeProfile = name;
   await writeConfig(config);
   return config;
@@ -89,9 +105,9 @@ export async function saveProfile(
 export async function deleteProfile(profileName: string): Promise<ConfigFile> {
   const name = validateProfileName(profileName || DEFAULT_PROFILE);
   const config = await readConfig();
-  delete config.profiles[name];
+  config.profiles.delete(name);
   if (config.activeProfile === name) {
-    config.activeProfile = Object.keys(config.profiles)[0];
+    config.activeProfile = config.profiles.keys().next().value;
   }
   await writeConfig(config);
   return config;
@@ -99,7 +115,7 @@ export async function deleteProfile(profileName: string): Promise<ConfigFile> {
 
 export async function listProfiles(): Promise<Array<{ name: string; active: boolean; updatedAt: string }>> {
   const config = await readConfig();
-  return Object.entries(config.profiles).map(([name, profile]) => ({
+  return Array.from(config.profiles, ([name, profile]) => ({
     name,
     active: name === config.activeProfile,
     updatedAt: profile.updatedAt
@@ -144,7 +160,7 @@ export async function resolveCredentials(
 
   const config = await readConfig();
   const profileName = validateProfileName(input.profile ?? config.activeProfile ?? DEFAULT_PROFILE);
-  const profile = Object.hasOwn(config.profiles, profileName) ? config.profiles[profileName] : undefined;
+  const profile = config.profiles.get(profileName);
   if (profile) {
     return {
       apiKey: profile.apiKey,
@@ -165,6 +181,8 @@ export async function resolveCredentials(
 
 export async function configFileMode(): Promise<string | undefined> {
   try {
+    // Same operator-controlled env source as the read/write above.
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     const info = await stat(configPath());
     return `0${(info.mode & 0o777).toString(8)}`;
   } catch (error) {
@@ -182,11 +200,11 @@ function parseConfig(value: unknown): ConfigFile {
     throw new Error("Config must contain a profiles object.");
   }
 
-  const profiles: Record<string, Profile> = Object.create(null);
+  const profiles = new Map<string, Profile>();
   for (const [name, profile] of Object.entries(value.profiles ?? {})) {
     validateProfileName(name);
     if (!isProfile(profile)) throw new Error(`Profile '${name}' is malformed.`);
-    profiles[name] = profile;
+    profiles.set(name, profile);
   }
 
   const activeProfile =
