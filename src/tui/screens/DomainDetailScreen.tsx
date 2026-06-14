@@ -22,6 +22,7 @@ import { TransferTab } from '../components/TransferTab.js';
 import { RenewForm } from '../components/RenewForm.js';
 import { deterministicIdempotencyKey } from '../../lib/api-client.js';
 import { requireOperation } from '../../lib/operations.js';
+import { useMutation } from '../hooks/useMutation.js';
 
 interface DomainDetailScreenProps {
   service: TuiApiService;
@@ -54,39 +55,43 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
   const [selectedGlueRecord, setSelectedGlueRecord] = useState<NormalizedGlueRecord | undefined>();
   const [glueFormData, setGlueFormData] = useState<Record<string, unknown>>({});
   const [glueReviewSnapshot, setGlueReviewSnapshot] = useState<ReviewSnapshot | undefined>();
-  const [glueSubmitting, setGlueSubmitting] = useState(false);
-  
+
   // Forward mutation state
   const [forwardMode, setForwardMode] = useState<'view' | 'create' | 'delete' | 'confirm'>('view');
   const [selectedForward, setSelectedForward] = useState<NormalizedForward | undefined>();
   const [forwardFormData, setForwardFormData] = useState<Record<string, unknown>>({});
   const [forwardReviewSnapshot, setForwardReviewSnapshot] = useState<ReviewSnapshot | undefined>();
-  const [forwardSubmitting, setForwardSubmitting] = useState(false);
-  
+
   // DNSSEC mutation state
   const [dnssecMode, setDnssecMode] = useState<'view' | 'create' | 'delete' | 'confirm'>('view');
   const [selectedDnssecRecord, setSelectedDnssecRecord] = useState<NormalizedDnssecRecord | undefined>();
   const [dnssecFormData, setDnssecFormData] = useState<Record<string, unknown>>({});
   const [dnssecReviewSnapshot, setDnssecReviewSnapshot] = useState<ReviewSnapshot | undefined>();
-  const [dnssecSubmitting, setDnssecSubmitting] = useState(false);
-  
+
   // Nameserver mutation state
   const [nameserverMode, setNameserverMode] = useState<'view' | 'edit' | 'confirm'>('view');
   const [nameserverFormData, setNameserverFormData] = useState<string[]>([]);
   const [nameserverReviewSnapshot, setNameserverReviewSnapshot] = useState<ReviewSnapshot | undefined>();
-  const [nameserverSubmitting, setNameserverSubmitting] = useState(false);
-  
+
   // DNS mutation state
   const [dnsMode, setDnsMode] = useState<DnsMode>('view');
   const [selectedDnsRecord, setSelectedDnsRecord] = useState<NormalizedDnsRecord | undefined>();
   const [dnsFormData, setDnsFormData] = useState<Record<string, unknown>>({});
   const [dnsReviewSnapshot, setDnsReviewSnapshot] = useState<ReviewSnapshot | undefined>();
-  const [dnsSubmitting, setDnsSubmitting] = useState(false);
 
   // Renewal mutation state
   const [renewMode, setRenewMode] = useState<'idle' | 'form' | 'submitting' | 'success' | 'error'>('idle');
   const [renewError, setRenewError] = useState<string | undefined>();
   const [renewSuccess, setRenewSuccess] = useState<string | undefined>();
+
+  // Centralized mutation runner. Wraps every service call so the screen
+  // never has to write `try { await service.foo() } catch {}` (which would
+  // never see the API error since the service catches it and returns a
+  // ResourceState with status: 'error').
+  const mutation = useMutation({
+    onSuccess: (message) => setStatus({ type: 'success', message }),
+    onError: (message) => setStatus({ type: 'error', message }),
+  });
 
   // Load domain overview
   const loadDomain = useCallback(async () => {
@@ -342,18 +347,15 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             }}
             confirmationLevel="disruptive"
             onConfirm={async () => {
-              setDnsSubmitting(true);
-              setStatus(null);
-              try {
-                await service.deleteDnsRecord(domain, selectedDnsRecord.id);
-                setStatus({ type: 'success', message: `Deleted DNS record ${selectedDnsRecord.id}` });
+              const recordId = selectedDnsRecord.id;
+              const result = await mutation.run(
+                () => service.deleteDnsRecord(domain, recordId),
+                `Deleted DNS record ${recordId}`,
+              );
+              if (result?.status === 'loaded') {
                 setDnsMode('view');
                 setSelectedDnsRecord(undefined);
                 await loadDns();
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setDnsSubmitting(false);
               }
             }}
             onBack={() => {
@@ -364,7 +366,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setDnsMode('view');
               setSelectedDnsRecord(undefined);
             }}
-            submitting={dnsSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'dns' && dnsMode === 'confirm' && dnsReviewSnapshot && (
@@ -373,24 +375,18 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             review={dnsReviewSnapshot}
             confirmationLevel={dnsReviewSnapshot.classification === 'destructive' ? 'disruptive' : 'standard'}
             onConfirm={async () => {
-              setDnsSubmitting(true);
-              setStatus(null);
-              try {
-                if (dnsMode === 'confirm' && selectedDnsRecord) {
-                  await service.editDnsRecord(domain, selectedDnsRecord.id, dnsFormData);
-                  setStatus({ type: 'success', message: `Edited DNS record ${selectedDnsRecord.id}` });
-                } else {
-                  await service.createDnsRecord(domain, dnsFormData);
-                  setStatus({ type: 'success', message: 'Created DNS record' });
-                }
+              const editing = !!selectedDnsRecord;
+              const result = await mutation.run(
+                () => editing
+                  ? service.editDnsRecord(domain, selectedDnsRecord!.id, dnsFormData)
+                  : service.createDnsRecord(domain, dnsFormData),
+                editing ? `Edited DNS record ${selectedDnsRecord!.id}` : 'Created DNS record',
+              );
+              if (result?.status === 'loaded') {
                 setDnsMode('view');
                 setSelectedDnsRecord(undefined);
                 setDnsFormData({});
                 await loadDns();
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setDnsSubmitting(false);
               }
             }}
             onBack={() => {
@@ -401,7 +397,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setSelectedDnsRecord(undefined);
               setDnsFormData({});
             }}
-            submitting={dnsSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'nameservers' && nameserverMode === 'view' && (
@@ -444,19 +440,15 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             review={nameserverReviewSnapshot}
             confirmationLevel="disruptive"
             onConfirm={async () => {
-              setNameserverSubmitting(true);
-              setStatus(null);
-              try {
-                await service.updateNameservers(domain, nameserverFormData);
-                setStatus({ type: 'success', message: 'Nameservers updated successfully' });
+              const result = await mutation.run(
+                () => service.updateNameservers(domain, nameserverFormData),
+                'Nameservers updated successfully',
+              );
+              if (result?.status === 'loaded') {
                 setNameserverMode('view');
                 setNameserverFormData([]);
                 setNameserverReviewSnapshot(undefined);
                 await loadNameservers();
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setNameserverSubmitting(false);
               }
             }}
             onBack={() => {
@@ -468,7 +460,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setNameserverFormData([]);
               setNameserverReviewSnapshot(undefined);
             }}
-            submitting={nameserverSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'glue' && glueMode === 'view' && (
@@ -531,25 +523,20 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             review={glueReviewSnapshot}
             confirmationLevel="standard"
             onConfirm={async () => {
-              setGlueSubmitting(true);
-              try {
-                const isEdit = !!selectedGlueRecord;
-                const ips = (glueFormData.ips as string[]) ?? [];
-                if (isEdit) {
-                  await service.updateGlueRecord(domain, selectedGlueRecord!.subdomain, ips);
-                } else {
-                  await service.createGlueRecord(domain, glueFormData.hostname as string, ips);
-                }
+              const isEdit = !!selectedGlueRecord;
+              const ips = (glueFormData.ips as string[]) ?? [];
+              const result = await mutation.run(
+                () => isEdit
+                  ? service.updateGlueRecord(domain, selectedGlueRecord!.subdomain, ips)
+                  : service.createGlueRecord(domain, glueFormData.hostname as string, ips),
+                isEdit ? 'Glue record updated' : 'Glue record created',
+              );
+              if (result?.status === 'loaded') {
                 await loadGlue();
-                setStatus({ type: 'success', message: isEdit ? 'Glue record updated' : 'Glue record created' });
                 setGlueMode('view');
                 setGlueFormData({});
                 setGlueReviewSnapshot(undefined);
                 setSelectedGlueRecord(undefined);
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setGlueSubmitting(false);
               }
             }}
             onBack={() => {
@@ -562,7 +549,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setGlueReviewSnapshot(undefined);
               setSelectedGlueRecord(undefined);
             }}
-            submitting={glueSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'glue' && glueMode === 'delete' && glueReviewSnapshot && (
@@ -571,17 +558,16 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             review={glueReviewSnapshot}
             confirmationLevel="disruptive"
             onConfirm={async () => {
-              setGlueSubmitting(true);
-              try {
-                await service.deleteGlueRecord(domain, selectedGlueRecord!.subdomain);
+              const subdomain = selectedGlueRecord!.subdomain;
+              const result = await mutation.run(
+                () => service.deleteGlueRecord(domain, subdomain),
+                'Glue record deleted',
+              );
+              if (result?.status === 'loaded') {
                 await loadGlue();
                 setGlueMode('view');
                 setGlueReviewSnapshot(undefined);
                 setSelectedGlueRecord(undefined);
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setGlueSubmitting(false);
               }
             }}
             onBack={() => {
@@ -594,7 +580,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setGlueReviewSnapshot(undefined);
               setSelectedGlueRecord(undefined);
             }}
-            submitting={glueSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'forwards' && forwardMode === 'view' && (
@@ -646,18 +632,15 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             review={forwardReviewSnapshot}
             confirmationLevel="standard"
             onConfirm={async () => {
-              setForwardSubmitting(true);
-              try {
-                await service.addUrlForward(domain, forwardFormData);
+              const result = await mutation.run(
+                () => service.addUrlForward(domain, forwardFormData),
+                'URL forward created',
+              );
+              if (result?.status === 'loaded') {
                 await loadForwards();
-                setStatus({ type: 'success', message: 'URL forward created' });
                 setForwardMode('view');
                 setForwardFormData({});
                 setForwardReviewSnapshot(undefined);
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setForwardSubmitting(false);
               }
             }}
             onBack={() => {
@@ -669,7 +652,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setForwardFormData({});
               setForwardReviewSnapshot(undefined);
             }}
-            submitting={forwardSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'forwards' && forwardMode === 'delete' && forwardReviewSnapshot && (
@@ -678,17 +661,16 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             review={forwardReviewSnapshot}
             confirmationLevel="disruptive"
             onConfirm={async () => {
-              setForwardSubmitting(true);
-              try {
-                await service.deleteUrlForward(domain, selectedForward!.id);
+              const id = selectedForward!.id;
+              const result = await mutation.run(
+                () => service.deleteUrlForward(domain, id),
+                'URL forward deleted',
+              );
+              if (result?.status === 'loaded') {
                 await loadForwards();
                 setForwardMode('view');
                 setForwardReviewSnapshot(undefined);
                 setSelectedForward(undefined);
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setForwardSubmitting(false);
               }
             }}
             onBack={() => {
@@ -701,7 +683,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setForwardReviewSnapshot(undefined);
               setSelectedForward(undefined);
             }}
-            submitting={forwardSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'dnssec' && dnssecMode === 'view' && (
@@ -752,18 +734,15 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             review={dnssecReviewSnapshot}
             confirmationLevel="standard"
             onConfirm={async () => {
-              setDnssecSubmitting(true);
-              try {
-                await service.createDnssecRecord(domain, dnssecFormData);
+              const result = await mutation.run(
+                () => service.createDnssecRecord(domain, dnssecFormData),
+                'DNSSEC record created',
+              );
+              if (result?.status === 'loaded') {
                 await loadDnssec();
-                setStatus({ type: 'success', message: 'DNSSEC record created' });
                 setDnssecMode('view');
                 setDnssecFormData({});
                 setDnssecReviewSnapshot(undefined);
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setDnssecSubmitting(false);
               }
             }}
             onBack={() => {
@@ -775,7 +754,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setDnssecFormData({});
               setDnssecReviewSnapshot(undefined);
             }}
-            submitting={dnssecSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'dnssec' && dnssecMode === 'delete' && dnssecReviewSnapshot && (
@@ -784,17 +763,16 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
             review={dnssecReviewSnapshot}
             confirmationLevel="disruptive"
             onConfirm={async () => {
-              setDnssecSubmitting(true);
-              try {
-                await service.deleteDnssecRecord(domain, String(selectedDnssecRecord!.keyTag));
+              const keyTag = String(selectedDnssecRecord!.keyTag);
+              const result = await mutation.run(
+                () => service.deleteDnssecRecord(domain, keyTag),
+                'DNSSEC record deleted',
+              );
+              if (result?.status === 'loaded') {
                 await loadDnssec();
                 setDnssecMode('view');
                 setDnssecReviewSnapshot(undefined);
                 setSelectedDnssecRecord(undefined);
-              } catch (err) {
-                setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
-              } finally {
-                setDnssecSubmitting(false);
               }
             }}
             onBack={() => {
@@ -807,7 +785,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
               setDnssecReviewSnapshot(undefined);
               setSelectedDnssecRecord(undefined);
             }}
-            submitting={dnssecSubmitting}
+            submitting={mutation.submitting}
           />
         )}
         {activeTab === 'ssl' && <SslTab domain={domain} service={service} theme={theme} />}
