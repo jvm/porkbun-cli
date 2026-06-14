@@ -169,7 +169,7 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
     if (char === 'a' || char === 'A') {
       const targets = selectedDomains.size > 0 
         ? Array.from(selectedDomains) 
-        : filteredDomains[selectedIndex] ? [filteredDomains[selectedIndex].domain] : [];
+        : filteredDomains.at(selectedIndex) ? [filteredDomains.at(selectedIndex)!.domain] : [];
       
       if (targets.length > 0) {
         // Determine new state (toggle based on first domain's current state)
@@ -204,10 +204,10 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
     } else if (key.pageDown) {
       setSelectedIndex(prev => Math.min(filteredDomains.length - 1, prev + 20));
     } else if (key.return) {
-      const domain = filteredDomains[selectedIndex];
+      const domain = filteredDomains.at(selectedIndex);
       if (domain) onOpenDomain(domain.domain);
     } else if (char === ' ') {
-      const domain = filteredDomains[selectedIndex];
+      const domain = filteredDomains.at(selectedIndex);
       if (domain) {
         setSelectedDomains(prev => {
           const next = new Set(prev);
@@ -254,7 +254,7 @@ export function DomainsScreen({ service, theme, onOpenDomain, onOpenTransfers, o
       description: 'Open the selected domain for editing',
       classification: 'read-only',
       onExecute: () => {
-        const domain = filteredDomains[selectedIndex];
+        const domain = filteredDomains.at(selectedIndex);
         if (domain) onOpenDomain(domain.domain);
       },
     },
