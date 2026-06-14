@@ -18,8 +18,8 @@ export function DnssecTab({ records, theme, onCreate, onDelete }: DnssecTabProps
       return;
     }
 
-    if (input === 'd' && records[selectedIndex]) {
-      onDelete(records[selectedIndex]);
+    if (input === 'd' && records.at(selectedIndex)) {
+      onDelete(records.at(selectedIndex)!);
       return;
     }
 

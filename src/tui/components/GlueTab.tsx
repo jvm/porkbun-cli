@@ -19,13 +19,13 @@ export function GlueTab({ records, theme, onCreate, onEdit, onDelete }: GlueTabP
       return;
     }
 
-    if (input === 'e' && records[selectedIndex]) {
-      onEdit(records[selectedIndex]);
+    if (input === 'e' && records.at(selectedIndex)) {
+      onEdit(records.at(selectedIndex)!);
       return;
     }
 
-    if (input === 'd' && records[selectedIndex]) {
-      onDelete(records[selectedIndex]);
+    if (input === 'd' && records.at(selectedIndex)) {
+      onDelete(records.at(selectedIndex)!);
       return;
     }
 

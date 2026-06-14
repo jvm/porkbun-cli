@@ -18,8 +18,8 @@ export function ForwardsTab({ forwards, theme, onCreate, onDelete }: ForwardsTab
       return;
     }
 
-    if (input === 'd' && forwards[selectedIndex]) {
-      onDelete(forwards[selectedIndex]);
+    if (input === 'd' && forwards.at(selectedIndex)) {
+      onDelete(forwards.at(selectedIndex)!);
       return;
     }
 
