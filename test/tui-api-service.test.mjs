@@ -145,6 +145,7 @@ describe('TUI API Service Integration', () => {
         pricing: {
           com: { registration: '9.68', renewal: '9.68', transfer: '9.68' },
           net: { registration: '9.68', renewal: '9.68', transfer: '9.68' },
+          'co.uk': { registration: '7.50', renewal: '7.50', transfer: '7.50' },
         },
       }).persist();
 
@@ -163,11 +164,53 @@ describe('TUI API Service Integration', () => {
       assert.strictEqual(result.data.com.renewal, '9.68');
       assert.strictEqual(result.data.com.transfer, '9.68');
 
-      const tldPrice = await service.getTldPrice('com', 'renewal');
+      const tldPrice = await service.getTldPrice('example.com', 'renewal');
       assert.strictEqual(tldPrice, '9.68');
 
-      const unknownTld = await service.getTldPrice('zzz', 'renewal');
+      // Multi-label TLD: example.co.uk must resolve to the 'co.uk' key,
+      // not the bare 'uk' suffix.
+      const multiLabel = await service.getTldPrice('example.co.uk', 'renewal');
+      assert.strictEqual(multiLabel, '7.50');
+
+      const unknownTld = await service.getTldPrice('example.zzz', 'renewal');
       assert.strictEqual(unknownTld, undefined);
+    } finally {
+      await mockAgent.close();
+    }
+  });
+
+  it('reads per-domain renewal and transfer prices from the checkDomain response', async () => {
+    const mockAgent = new MockAgent();
+    mockAgent.disableNetConnect();
+    try {
+      const mockPool = mockAgent.get('https://api.porkbun.com');
+
+      mockPool.intercept({
+        path: '/api/json/v3/domain/checkDomain/example.com',
+        method: 'POST',
+      }).reply(200, {
+        status: 'SUCCESS',
+        response: {
+          avail: 'no',
+          price: '12.34',
+          additional: {
+            renewal: { price: '11.11' },
+            transfer: { price: '9.99' },
+          },
+        },
+      }).persist();
+
+      const client = new ApiClient({
+        apiKey: 'test-key',
+        secretApiKey: 'test-secret',
+        fetch: withDispatcher(mockAgent),
+      });
+      const service = new TuiApiService(client);
+
+      const renewal = await service.getDomainPriceFromCheck('example.com', 'renewal');
+      assert.strictEqual(renewal, '11.11');
+      const transfer = await service.getDomainPriceFromCheck('example.com', 'transfer');
+      assert.strictEqual(transfer, '9.99');
     } finally {
       await mockAgent.close();
     }

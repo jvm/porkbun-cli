@@ -29,14 +29,20 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
   useEffect(() => {
     const checkPricing = async () => {
       try {
-        // Renewal pricing is not part of the checkDomain response; look it up
-        // from the dedicated pricing endpoint by TLD.
-        const tld = domain.domain.split('.').slice(-1)[0];
-        if (!tld) {
-          setPricing({ reason: 'Could not determine TLD for pricing lookup.' });
-          return;
+        // Prefer the per-domain renewal price from checkDomain — it reflects
+        // premium or otherwise domain-specific pricing. The /pricing/get
+        // endpoint only exposes the generic TLD tariff, which can be wrong
+        // for premium names and is also rejected by the renew endpoint
+        // when it does not match the exact domain total.
+        let priceStr: string | undefined;
+        try {
+          priceStr = await service.getDomainPriceFromCheck(domain.domain, 'renewal');
+        } catch {
+          priceStr = undefined;
         }
-        const priceStr = await service.getTldPrice(tld, 'renewal');
+        if (!priceStr) {
+          priceStr = await service.getTldPrice(domain.domain, 'renewal');
+        }
         const parsed = priceStr ? priceStringToCents(priceStr) : undefined;
         if (parsed !== undefined) {
           setPricing({ cost: parsed });

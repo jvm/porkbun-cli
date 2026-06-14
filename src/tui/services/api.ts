@@ -343,6 +343,22 @@ export class TuiApiService {
     }
   }
 
+  /**
+   * Read the per-domain price for a given action from the checkDomain
+   * response. Porkbun returns additional.renewal.price and
+   * additional.transfer.price for the specific domain, which is the only
+   * correct source for premium and other non-default-priced domains
+   * (TLD-level /pricing/get is a fallback only).
+   */
+  async getDomainPriceFromCheck(domain: string, kind: 'renewal' | 'transfer'): Promise<string | undefined> {
+    const result = await this.checkDomain(domain);
+    if (result.status !== 'loaded' || !result.data) return undefined;
+    const response = asRecord(result.data.response);
+    const additional = asRecord(response.additional);
+    const bucket = asRecord(additional[kind]);
+    return typeof bucket.price === 'string' ? bucket.price : undefined;
+  }
+
   // --- Pricing ---
 
   async getPricing(): Promise<ResourceState<Record<string, { registration: string; renewal: string; transfer: string }>>> {
@@ -366,14 +382,29 @@ export class TuiApiService {
   }
 
   /**
-   * Look up a price string for a TLD from the pricing endpoint.
-   * Returns undefined when the TLD is missing or the request failed.
+   * Look up a price string for a domain from the pricing endpoint.
+   * Accepts a full domain like "example.co.uk" and resolves the longest
+   * matching TLD suffix against the pricing data, so multi-label TLDs
+   * (co.uk, com.au, co.jp, ...) hit the right key.
+   *
+   * Returns undefined when no matching TLD is present or the request
+   * failed. Callers that need the domain-specific price (e.g. premium
+   * domains) should prefer the per-domain checkDomain response.
    */
-  async getTldPrice(tld: string, kind: 'registration' | 'renewal' | 'transfer'): Promise<string | undefined> {
+  async getTldPrice(domain: string, kind: 'registration' | 'renewal' | 'transfer'): Promise<string | undefined> {
     const result = await this.getPricing();
     if (result.status !== 'loaded' || !result.data) return undefined;
-    const tldLower = tld.toLowerCase().replace(/^\.+/, '');
-    return result.data[tldLower]?.[kind] || undefined;
+    const labels = domain.toLowerCase().replace(/^\.+/, '').split('.').filter(Boolean);
+    if (labels.length < 2) return undefined;
+    // Walk the TLD suffix from longest to shortest, capped at 3 labels
+    // (covers virtually every public TLD: com, co.uk, com.au, co.jp, ...).
+    const maxSuffix = Math.min(labels.length - 1, 3);
+    for (let suffixLen = maxSuffix; suffixLen >= 1; suffixLen--) {
+      const candidate = labels.slice(-suffixLen).join('.');
+      const entry = result.data[candidate];
+      if (entry && entry[kind]) return entry[kind];
+    }
+    return undefined;
   }
 
   // --- Registration ---

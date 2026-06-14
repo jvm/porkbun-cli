@@ -40,15 +40,17 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
     setError(null);
 
     try {
-      // Transfer pricing is not part of the checkDomain response; look it up
-      // from the dedicated pricing endpoint by TLD.
-      const tld = domain.split('.').slice(-1)[0];
-      if (!tld) {
-        setPricing({ reason: 'Could not determine TLD for pricing lookup.' });
-        setError('Transfer pricing not available. Please check the Porkbun website.');
-        return;
+      // Prefer the per-domain transfer price from checkDomain; fall back to
+      // the generic TLD tariff only if the per-domain price is missing.
+      let priceStr: string | undefined;
+      try {
+        priceStr = await service.getDomainPriceFromCheck(domain, 'transfer');
+      } catch {
+        priceStr = undefined;
       }
-      const priceStr = await service.getTldPrice(tld, 'transfer');
+      if (!priceStr) {
+        priceStr = await service.getTldPrice(domain, 'transfer');
+      }
       const parsed = priceStr ? priceStringToCents(priceStr) : undefined;
       if (parsed !== undefined) {
         setPricing({ cost: parsed });
