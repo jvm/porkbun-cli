@@ -9,6 +9,8 @@ import {
   validateGlueForm,
   validateForwardForm,
   validateDnssecForm,
+  buildDnsRecordPayload,
+  stripParentDomain,
   priceStringToCents,
   centsToUsd,
 } from '../dist/tui/forms/validators.js';
@@ -110,6 +112,52 @@ describe('TUI Form Validators', () => {
     it('accepts valid DNSSEC data', () => {
       const errors = validateDnssecForm({ keyTag: '12345', alg: '8', digestType: '2', digest: 'abcdef1234567890', maxSigLife: '', keyDataFlags: '', keyDataProtocol: '', keyDataAlgo: '', keyDataPubKey: '' });
       assert.strictEqual(Object.keys(errors).length, 0);
+    });
+  });
+
+  describe('buildDnsRecordPayload', () => {
+    it('omits name for the apex record', () => {
+      const payload = buildDnsRecordPayload(
+        { type: 'A', name: '', content: '1.2.3.4', ttl: '', prio: '', notes: '' },
+        'example.com',
+      );
+      assert.strictEqual(payload.name, undefined);
+    });
+
+    it('treats the literal @ as the apex', () => {
+      const payload = buildDnsRecordPayload(
+        { type: 'A', name: '@', content: '1.2.3.4', ttl: '', prio: '', notes: '' },
+        'example.com',
+      );
+      assert.strictEqual(payload.name, undefined);
+    });
+
+    it('strips the parent domain from a fully qualified name', () => {
+      const payload = buildDnsRecordPayload(
+        { type: 'A', name: 'www.example.com', content: '1.2.3.4', ttl: '', prio: '', notes: '' },
+        'example.com',
+      );
+      assert.strictEqual(payload.name, 'www');
+    });
+
+    it('preserves a relative name unchanged', () => {
+      const payload = buildDnsRecordPayload(
+        { type: 'A', name: 'www', content: '1.2.3.4', ttl: '', prio: '', notes: '' },
+        'example.com',
+      );
+      assert.strictEqual(payload.name, 'www');
+    });
+  });
+
+  describe('stripParentDomain', () => {
+    it('strips matching suffix case-insensitively', () => {
+      assert.strictEqual(stripParentDomain('WWW.EXAMPLE.COM', 'example.com'), 'WWW');
+    });
+    it('returns the input when the suffix does not match', () => {
+      assert.strictEqual(stripParentDomain('mail.other.com', 'example.com'), 'mail.other.com');
+    });
+    it('returns the input for the bare apex hostname', () => {
+      assert.strictEqual(stripParentDomain('example.com', 'example.com'), 'example.com');
     });
   });
 

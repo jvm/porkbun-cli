@@ -289,6 +289,7 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
         {activeTab === 'dns' && (dnsMode === 'create' || dnsMode === 'edit') && (
           <DnsRecordForm
             theme={theme}
+            domain={domain}
             mode={dnsMode}
             initialRecord={selectedDnsRecord}
             onSubmit={(formData) => {

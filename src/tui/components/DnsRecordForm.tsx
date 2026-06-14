@@ -3,18 +3,20 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { Theme } from '../theme.js';
 import type { NormalizedDnsRecord } from '../types.js';
+import { buildDnsRecordPayload, stripParentDomain } from '../forms/validators.js';
 
 interface DnsRecordFormProps {
   theme: Theme;
+  domain: string;
   initialRecord?: NormalizedDnsRecord;
   onSubmit: (record: Partial<NormalizedDnsRecord>) => void;
   onCancel: () => void;
   mode: 'create' | 'edit';
 }
 
-export function DnsRecordForm({ theme, initialRecord, onSubmit, onCancel, mode }: DnsRecordFormProps) {
+export function DnsRecordForm({ theme, domain, initialRecord, onSubmit, onCancel, mode }: DnsRecordFormProps) {
   const [type, setType] = useState(initialRecord?.type || '');
-  const [name, setName] = useState(initialRecord?.name || '');
+  const [name, setName] = useState(initialRecord ? stripParentDomain(initialRecord.name, domain) : '');
   const [content, setContent] = useState(initialRecord?.content || '');
   const [ttl, setTtl] = useState(initialRecord?.ttl?.toString() || '300');
   const [prio, setPrio] = useState(initialRecord?.prio?.toString() || '');
@@ -71,14 +73,13 @@ export function DnsRecordForm({ theme, initialRecord, onSubmit, onCancel, mode }
         return;
       }
 
-      // Submit
-      const record: Partial<NormalizedDnsRecord> = {
-        type: type.toUpperCase(),
-        name: name || '@',
-        content,
-        ttl: ttl ? Number(ttl) : 300,
-        prio: prio ? Number(prio) : undefined,
-      };
+      // Submit: the write API expects the subdomain label, or empty for the
+      // apex record. The payload builder strips the parent domain and omits
+      // 'name' entirely when the apex is selected.
+      const record = buildDnsRecordPayload(
+        { type, name, content, ttl, prio, notes: '' },
+        domain,
+      ) as Partial<NormalizedDnsRecord>;
       onSubmit(record);
     }
   });
@@ -103,6 +104,7 @@ export function DnsRecordForm({ theme, initialRecord, onSubmit, onCancel, mode }
               value={field.value}
               onChange={field.onChange}
               placeholder={field.label}
+              focus={idx === focusedField}
             />
           </Box>
           {errors[field.label] && (
