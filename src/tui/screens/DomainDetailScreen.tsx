@@ -153,11 +153,21 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
     if (activeTab === 'dnssec') loadDnssec();
   }, [activeTab, loadDns, loadNameservers, loadGlue, loadForwards, loadDnssec]);
 
+  // Suppress global shortcuts whenever any child form or confirmation is mounted.
+  // Otherwise typing 'l' or 'h' in a hostname would silently switch tabs, 'q'
+  // would exit the screen, and 'r' would reload data, discarding the form.
+  const formActive =
+    renewMode !== 'idle' ||
+    dnsMode !== 'view' ||
+    nameserverMode !== 'view' ||
+    glueMode !== 'view' ||
+    forwardMode !== 'view' ||
+    dnssecMode !== 'view';
+
   // Handle input
   useInput((char, key) => {
-    // Don't process global keys when in renewal form
-    if (renewMode !== 'idle') {
-      if (key.escape) {
+    if (formActive) {
+      if (key.escape && renewMode !== 'idle') {
         setRenewMode('idle');
         setRenewError(undefined);
         setRenewSuccess(undefined);
