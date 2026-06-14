@@ -3,6 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { NormalizedDomain } from '../types.js';
 import type { TuiApiService } from '../services/api.js';
+import { priceStringToCents } from '../forms/validators.js';
 
 export interface RenewFormProps {
   theme: any;
@@ -28,22 +29,21 @@ export function RenewForm({ theme, service, domain, balanceCents, onRenew, onCan
   useEffect(() => {
     const checkPricing = async () => {
       try {
-        const result = await service.checkDomain(domain.domain);
-        if (result.status === 'loaded' && result.data) {
-          const response = result.data.response as any;
-          const renewalCost = response?.additional?.price?.renewal;
-          
-          if (renewalCost) {
-            setPricing({
-              cost: Math.round(parseFloat(renewalCost) * 100),
-            });
-          } else {
-            setPricing({
-              reason: 'Renewal pricing not available from API. Please check the Porkbun website.',
-            });
-          }
-        } else if (result.error) {
-          setError(result.error.message);
+        // Renewal pricing is not part of the checkDomain response; look it up
+        // from the dedicated pricing endpoint by TLD.
+        const tld = domain.domain.split('.').slice(-1)[0];
+        if (!tld) {
+          setPricing({ reason: 'Could not determine TLD for pricing lookup.' });
+          return;
+        }
+        const priceStr = await service.getTldPrice(tld, 'renewal');
+        const parsed = priceStr ? priceStringToCents(priceStr) : undefined;
+        if (parsed !== undefined) {
+          setPricing({ cost: parsed });
+        } else {
+          setPricing({
+            reason: 'Renewal pricing not available from API. Please check the Porkbun website.',
+          });
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));

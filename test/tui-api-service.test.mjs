@@ -131,6 +131,48 @@ describe('TUI API Service Integration', () => {
     }
   });
 
+  it('normalizes pricing response', async () => {
+    const mockAgent = new MockAgent();
+    mockAgent.disableNetConnect();
+    try {
+      const mockPool = mockAgent.get('https://api.porkbun.com');
+
+      mockPool.intercept({
+        path: '/api/json/v3/pricing/get',
+        method: 'POST',
+      }).reply(200, {
+        status: 'SUCCESS',
+        pricing: {
+          com: { registration: '9.68', renewal: '9.68', transfer: '9.68' },
+          net: { registration: '9.68', renewal: '9.68', transfer: '9.68' },
+        },
+      }).persist();
+
+      const client = new ApiClient({
+        apiKey: 'test-key',
+        secretApiKey: 'test-secret',
+        fetch: withDispatcher(mockAgent),
+      });
+      const service = new TuiApiService(client);
+
+      const result = await service.getPricing();
+
+      assert.strictEqual(result.status, 'loaded');
+      assert.ok(result.data);
+      assert.strictEqual(result.data.com.registration, '9.68');
+      assert.strictEqual(result.data.com.renewal, '9.68');
+      assert.strictEqual(result.data.com.transfer, '9.68');
+
+      const tldPrice = await service.getTldPrice('com', 'renewal');
+      assert.strictEqual(tldPrice, '9.68');
+
+      const unknownTld = await service.getTldPrice('zzz', 'renewal');
+      assert.strictEqual(unknownTld, undefined);
+    } finally {
+      await mockAgent.close();
+    }
+  });
+
   it('normalizes account balance', async () => {
     const mockAgent = new MockAgent();
     mockAgent.disableNetConnect();

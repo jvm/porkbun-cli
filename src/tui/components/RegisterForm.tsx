@@ -3,6 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { NormalizedDomain } from '../types.js';
 import type { TuiApiService } from '../services/api.js';
+import { priceStringToCents } from '../forms/validators.js';
 
 export interface RegisterFormProps {
   theme: any;
@@ -39,16 +40,37 @@ export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterF
       const result = await service.checkDomain(domain);
       if (result.status === 'loaded' && result.data) {
         const response = result.data.response as any;
-        const available = response?.available === true || response?.available === 'true';
-        const cost = response?.additional?.price?.registration;
-        
+        // Porkbun returns availability as `avail` ('yes'/'no') and the
+        // registration price as a top-level `price` string. Renewal and
+        // transfer prices are not in the checkDomain response; look them
+        // up from the pricing endpoint when needed.
+        const available = response?.avail === 'yes';
+        const priceStr: string | undefined = response?.price;
+
+        let costCents: number | undefined;
+        if (priceStr) {
+          const parsed = priceStringToCents(priceStr);
+          if (parsed !== undefined) costCents = parsed;
+        }
+
+        if (costCents === undefined) {
+          const tld = domain.split('.').slice(-1)[0];
+          if (tld) {
+            const tldPrice = await service.getTldPrice(tld, 'registration');
+            if (tldPrice) {
+              const parsed = priceStringToCents(tldPrice);
+              if (parsed !== undefined) costCents = parsed;
+            }
+          }
+        }
+
         setAvailability({
           available,
-          cost: cost ? Math.round(parseFloat(cost) * 100) : undefined,
+          cost: costCents,
           reason: !available ? response?.reason || 'Domain not available' : undefined,
         });
 
-        if (available && cost) {
+        if (available && costCents !== undefined) {
           setReadyToSubmit(true);
         }
       } else if (result.error) {

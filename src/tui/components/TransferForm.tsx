@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import type { TuiApiService } from '../services/api.js';
+import { priceStringToCents } from '../forms/validators.js';
 
 export interface TransferFormProps {
   theme: any;
@@ -39,24 +40,22 @@ export function TransferForm({ theme, service, balanceCents, onTransfer, onCance
     setError(null);
 
     try {
-      const result = await service.checkDomain(domain);
-      if (result.status === 'loaded' && result.data) {
-        const response = result.data.response as any;
-        const transferCost = response?.additional?.price?.transfer;
-        
-        if (transferCost) {
-          setPricing({
-            cost: Math.round(parseFloat(transferCost) * 100),
-          });
-          setStep('confirm');
-        } else {
-          setPricing({
-            reason: 'Transfer pricing not available from API',
-          });
-          setError('Transfer pricing not available. Please check the Porkbun website.');
-        }
-      } else if (result.error) {
-        setError(result.error.message);
+      // Transfer pricing is not part of the checkDomain response; look it up
+      // from the dedicated pricing endpoint by TLD.
+      const tld = domain.split('.').slice(-1)[0];
+      if (!tld) {
+        setPricing({ reason: 'Could not determine TLD for pricing lookup.' });
+        setError('Transfer pricing not available. Please check the Porkbun website.');
+        return;
+      }
+      const priceStr = await service.getTldPrice(tld, 'transfer');
+      const parsed = priceStr ? priceStringToCents(priceStr) : undefined;
+      if (parsed !== undefined) {
+        setPricing({ cost: parsed });
+        setStep('confirm');
+      } else {
+        setPricing({ reason: 'Transfer pricing not available from API' });
+        setError('Transfer pricing not available. Please check the Porkbun website.');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

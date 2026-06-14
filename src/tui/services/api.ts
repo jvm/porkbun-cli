@@ -342,6 +342,39 @@ export class TuiApiService {
     }
   }
 
+  // --- Pricing ---
+
+  async getPricing(): Promise<ResourceState<Record<string, { registration: string; renewal: string; transfer: string }>>> {
+    try {
+      const data = await this.client.request(requireOperation('getPricing'));
+      const record = asRecord(data);
+      const pricing = asRecord(record.pricing);
+      const result: Record<string, { registration: string; renewal: string; transfer: string }> = {};
+      for (const [tld, entry] of Object.entries(pricing)) {
+        const r = asRecord(entry);
+        result[tld] = {
+          registration: String(r.registration ?? ''),
+          renewal: String(r.renewal ?? ''),
+          transfer: String(r.transfer ?? ''),
+        };
+      }
+      return { status: 'loaded', data: result, timestamp: Date.now() };
+    } catch (error) {
+      return errorState(error);
+    }
+  }
+
+  /**
+   * Look up a price string for a TLD from the pricing endpoint.
+   * Returns undefined when the TLD is missing or the request failed.
+   */
+  async getTldPrice(tld: string, kind: 'registration' | 'renewal' | 'transfer'): Promise<string | undefined> {
+    const result = await this.getPricing();
+    if (result.status !== 'loaded' || !result.data) return undefined;
+    const tldLower = tld.toLowerCase().replace(/^\.+/, '');
+    return result.data[tldLower]?.[kind] || undefined;
+  }
+
   // --- Registration ---
 
   async registerDomain(domain: string, cost: number, agreeToTerms: string): Promise<ResourceState<Record<string, unknown>>> {
