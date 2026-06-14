@@ -7,7 +7,7 @@
  * on failure. This hook forces callers to inspect the returned state and
  * exposes a uniform submitting flag and status update.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { ResourceState } from '../types.js';
 
 export interface UseMutationOptions {
@@ -56,6 +56,12 @@ export async function runMutation<T>(
 }
 
 export function useMutation(options: UseMutationOptions = {}): UseMutationResult {
+  // Read the latest options via ref so the run callback stays referentially
+  // stable across renders; the caller passes an inline options object that
+  // would otherwise defeat useCallback's memoization.
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,22 +70,18 @@ export function useMutation(options: UseMutationOptions = {}): UseMutationResult
       setSubmitting(true);
       setError(null);
       try {
-        const result = await runMutation(serviceCall, successMessage, {
-          onSuccess: (m) => {
-            setError(null);
-            options.onSuccess?.(m);
-          },
+        return await runMutation(serviceCall, successMessage, {
+          onSuccess: (m) => optionsRef.current.onSuccess?.(m),
           onError: (m) => {
             setError(m);
-            options.onError?.(m);
+            optionsRef.current.onError?.(m);
           },
         });
-        return result;
       } finally {
         setSubmitting(false);
       }
     },
-    [options],
+    [],
   );
 
   const clearError = useCallback(() => setError(null), []);

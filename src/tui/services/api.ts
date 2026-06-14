@@ -4,6 +4,7 @@
  */
 import type { ApiClient } from '../../lib/api-client.js';
 import { requireOperation } from '../../lib/operations.js';
+import { stripParentDomain } from '../forms/validators.js';
 import type {
   NormalizedDomain,
   NormalizedDnsRecord,
@@ -536,7 +537,7 @@ function normalizeGlueResponse(record: Record<string, unknown>, parentDomain: st
         const ipv6 = asStringArray(data.v6 ?? data.ipv6);
         return {
           hostname,
-          subdomain: deriveSubdomain(hostname, parentDomain),
+          subdomain: stripParentDomain(hostname, parentDomain),
           ipv4,
           ipv6,
           ips: [...ipv4, ...ipv6],
@@ -645,20 +646,6 @@ function asArray(value: unknown): Array<Record<string, unknown>> {
 function asStringArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.map(String);
   return [];
-}
-
-/**
- * Strip the parent domain suffix from a fully qualified hostname to recover
- * the glue-record subdomain label (e.g. "ns1.example.com" + "example.com" -> "ns1").
- * Returns the original hostname if it does not end with the parent domain.
- */
-function deriveSubdomain(hostname: string, parentDomain: string): string {
-  const suffix = `.${parentDomain.toLowerCase()}`;
-  const lower = hostname.toLowerCase();
-  if (lower.endsWith(suffix) && hostname.length > parentDomain.length + 1) {
-    return hostname.slice(0, -parentDomain.length - 1);
-  }
-  return hostname;
 }
 
 function normalizeLabels(value: unknown): string[] | undefined {
