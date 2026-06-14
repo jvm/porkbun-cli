@@ -27,7 +27,7 @@ export function DnssecTab({ records, theme, onCreate, onDelete }: DnssecTabProps
     if (key.upArrow) {
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.downArrow) {
-      setSelectedIndex((prev) => Math.min(records.length - 1, prev + 1));
+      setSelectedIndex((prev) => Math.max(0, Math.min(records.length - 1, prev + 1)));
     }
   });
 

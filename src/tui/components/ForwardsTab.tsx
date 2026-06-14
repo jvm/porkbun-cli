@@ -27,7 +27,7 @@ export function ForwardsTab({ forwards, theme, onCreate, onDelete }: ForwardsTab
     if (key.upArrow) {
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.downArrow) {
-      setSelectedIndex((prev) => Math.min(forwards.length - 1, prev + 1));
+      setSelectedIndex((prev) => Math.max(0, Math.min(forwards.length - 1, prev + 1)));
     }
   });
 

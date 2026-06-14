@@ -868,7 +868,7 @@ function DnsTab({
     if (key.upArrow || input === 'k') {
       setSelectedIndex(prev => Math.max(0, prev - 1));
     } else if (key.downArrow || input === 'j') {
-      setSelectedIndex(prev => Math.min(records.length - 1, prev + 1));
+      setSelectedIndex(prev => Math.max(0, Math.min(records.length - 1, prev + 1)));
     } else if (input === 'c' && onCreate) {
       onCreate();
     } else if (input === 'e' && onEdit && records.at(selectedIndex)) {
