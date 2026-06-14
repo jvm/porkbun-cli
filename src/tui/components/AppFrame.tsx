@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { TerminalCapabilities, Breakpoint } from '../types.js';
+import type { TerminalCapabilities } from '../types.js';
 import { getBreakpoint } from '../types.js';
 import type { Theme } from '../theme.js';
 
