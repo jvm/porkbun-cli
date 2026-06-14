@@ -47,6 +47,8 @@ All commands use pnpm.
   security plugin flags bracket writes/reads on plain objects.
 - **Non-literal array indexing** uses `arr.at(i)`, not `arr[i]`.
 - **Single dynamic property reads** on a plain object use `Reflect.get(obj, key)`.
+- **No inline suppressions** in source (`eslint-disable*`, `ts-ignore`,
+  `ts-expect-error`). Prefer refactors, helper functions, or typed wrappers.
 - **`as any` is not allowed** unless wrapped in a one-line justification
   (`// eslint-disable-next-line @typescript-eslint/no-explicit-any — <why>`).
 - **No blanket `eslint-disable` files.** Disables are per-line with a
@@ -68,6 +70,8 @@ All commands use pnpm.
 - **Dependency audit:** `npm audit --omit=dev --audit-level=high` on every
   PR (`ci.yml`). Use npm (not pnpm) for the registry talk so the
   vulnerability database is the authoritative source.
+- **No rule-ignoring workflow flags** (for example, actionlint `-ignore`);
+  fix the underlying workflow or shell issue instead.
 - **Trusted publishing (OIDC) for npm** — never commit an `NPM_TOKEN`
   secret.
 - **All GitHub Actions are pinned by SHA**, with a comment showing the
@@ -135,16 +139,16 @@ Mutating commands fail in non-TTY contexts unless `--yes` or `--dry-run` is prov
 - **Schema-first design**: `src/lib/operations.ts` defines every API operation as a typed `OperationDefinition`; the TUI and CLI both consume it. When adding an API operation, update operations.ts and the OpenAPI spec first.
 - **Reference repo** for the jvm-OSS standardization (~/\_standards/PLAN.md). When porting the canonical to the other 5 repos, this is the working example.
 - `tsconfig.json` strict flags `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` are enabled here; keep future changes compatible with them.
-  - `src/tui/redact.ts` has a per-file `/* eslint-disable no-control-regex */` at the top — the whole module is the redaction layer and the two regexes are core logic. Justified and reviewed; do not convert to per-line disables.
+- Source should stay free of lint suppressions; prefer refactors over adding
+  `eslint-disable*`, `ts-ignore`, or similar comments.
 
 ### Code Style
 
 - **Dynamic-key collections** use `Map<K, V>` instead of `Record<K, V>`. `eslint-plugin-security` flags bracket writes/reads on plain objects.
 - **State-indexed array access** uses `arr.at(i)` instead of `arr[i]`.
 - **Single dynamic reads** on plain objects use `Reflect.get(obj, key)`.
-- **fs operations on dynamic paths** are per-line disabled with a one-line justification (`// eslint-disable-next-line security/detect-non-literal-fs-filename` followed by why the call is safe). No blanket disable (the redaction module is the documented exception).
 - **`as any` and `theme: any` are not allowed.** Type casts should narrow to a structural shape; props should use the actual interface (`Theme` from `src/tui/theme.ts`).
-- **Per-line `eslint-disable-next-line`** is **not preferred** — we avoid it where possible. The only current use is fs-filename disables, and even those should be removed by refactoring to take validated paths.
+- **Per-line `eslint-disable-next-line`** is **not preferred**. The target is zero inline suppressions; if a case truly cannot be refactored, document it explicitly before landing.
 
 ### Validation
 
