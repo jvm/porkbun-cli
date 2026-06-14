@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { NormalizedDomain } from "../types.js";
 import type { TuiApiService } from "../services/api.js";
@@ -16,8 +17,8 @@ export interface RenewFormProps {
 }
 
 interface RenewalPricingResult {
-  cost?: number;
-  reason?: string;
+  cost?: number | undefined;
+  reason?: string | undefined;
 }
 
 export function RenewForm({

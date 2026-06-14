@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import type { NormalizedSslBundle } from "../types.js";
 import type { TuiApiService } from "../services/api.js";
 import type { Theme } from "../theme.js";

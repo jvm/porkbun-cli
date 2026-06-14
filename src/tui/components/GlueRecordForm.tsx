@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { NormalizedGlueRecord } from "../types.js";
 import type { Theme } from "../theme.js";
@@ -7,10 +8,10 @@ import type { Theme } from "../theme.js";
 export interface GlueRecordFormProps {
   theme: Theme;
   mode: "create" | "edit";
-  initialRecord?: NormalizedGlueRecord;
+  initialRecord?: NormalizedGlueRecord | undefined;
   // When the user returns to the form from the confirmation step ('b'),
   // re-seed it from these values so the in-progress edits are not lost.
-  initialValues?: { hostname?: string; ips?: string[] };
+  initialValues?: { hostname?: string | undefined; ips?: string[] | undefined } | undefined;
   onSubmit: (data: { hostname: string; ips: string[] }) => void;
   onCancel: () => void;
 }

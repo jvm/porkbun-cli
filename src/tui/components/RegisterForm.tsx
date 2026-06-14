@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { TuiApiService } from "../services/api.js";
 import type { Theme } from "../theme.js";
@@ -14,8 +15,8 @@ export interface RegisterFormProps {
 
 interface AvailabilityResult {
   available: boolean;
-  cost?: number;
-  reason?: string;
+  cost?: number | undefined;
+  reason?: string | undefined;
 }
 
 export function RegisterForm({ theme, service, onRegister, onCancel }: RegisterFormProps) {

@@ -3,7 +3,8 @@
  * Implements responsive breakpoints per PRD section 9.2.
  */
 import React from "react";
-import { Box, Text } from "ink";
+import { Box } from "ink";
+import { Text } from "../text.js";
 import type { TerminalCapabilities } from "../types.js";
 import { getBreakpoint } from "../types.js";
 import type { Theme } from "../theme.js";

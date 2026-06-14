@@ -5,21 +5,21 @@ import { isSecretKey, redact } from "./output.js";
 import type { OperationDefinition } from "./operations.js";
 
 export interface ApiClientOptions extends CredentialInput {
-  baseUrl?: string;
-  fetch?: typeof globalThis.fetch;
-  ipv4?: boolean;
-  timeoutMs?: number;
-  verbose?: boolean;
+  baseUrl?: string | undefined;
+  fetch?: typeof globalThis.fetch | undefined;
+  ipv4?: boolean | undefined;
+  timeoutMs?: number | undefined;
+  verbose?: boolean | undefined;
 }
 
 export interface OperationRequest {
-  pathParams?: Record<string, unknown>;
-  query?: Record<string, unknown>;
-  body?: Record<string, unknown>;
-  dryRun?: boolean;
-  idempotencyKey?: string;
-  freshIdempotencyKey?: boolean;
-  signal?: AbortSignal;
+  pathParams?: Record<string, unknown> | undefined;
+  query?: Record<string, unknown> | undefined;
+  body?: Record<string, unknown> | undefined;
+  dryRun?: boolean | undefined;
+  idempotencyKey?: string | undefined;
+  freshIdempotencyKey?: boolean | undefined;
+  signal?: AbortSignal | undefined;
 }
 
 export interface DryRunResult {
@@ -29,7 +29,7 @@ export interface DryRunResult {
   url: string;
   mutating: boolean;
   auth: "none" | "optional" | "required";
-  idempotencyKey?: string;
+  idempotencyKey?: string | undefined;
   body?: unknown;
   query?: unknown;
 }
@@ -106,13 +106,16 @@ export class ApiClient {
       const signal = request.signal
         ? AbortSignal.any([timeoutSignal, request.signal])
         : timeoutSignal;
-      response = await (this.options.fetch ?? globalThis.fetch)(url, {
+      const requestInit: RequestInit = {
         method,
         headers,
-        body: method === "POST" ? JSON.stringify(requestBody ?? {}) : undefined,
         redirect: "error",
         signal,
-      });
+      };
+      if (method === "POST") {
+        requestInit.body = JSON.stringify(requestBody ?? {});
+      }
+      response = await (this.options.fetch ?? globalThis.fetch)(url, requestInit);
     } catch (error) {
       const timeout =
         error instanceof Error &&

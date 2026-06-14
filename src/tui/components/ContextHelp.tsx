@@ -2,7 +2,8 @@
  * ContextHelp - contextual help listing current keys, action descriptions, and safety implications
  */
 import React from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import type { Theme } from "../theme.js";
 
 interface ContextHelpProps {

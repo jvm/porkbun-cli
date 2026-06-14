@@ -2,7 +2,8 @@
  * TransfersScreen - domain transfer initiation with pricing check and billable confirmation
  */
 import React, { useState, useCallback, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import type { Theme } from "../theme.js";
 import type { TuiApiService } from "../services/api.js";
 import type { NormalizedTransfer } from "../types.js";
@@ -12,7 +13,7 @@ import { VirtualList } from "../components/VirtualList.js";
 interface TransfersScreenProps {
   service: TuiApiService;
   theme: Theme;
-  balanceCents?: number;
+  balanceCents?: number | undefined;
   onSuccess: () => void;
   onCancel: () => void;
 }

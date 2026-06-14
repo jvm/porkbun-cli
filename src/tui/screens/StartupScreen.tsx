@@ -2,7 +2,8 @@
  * StartupScreen - authentication, profile selection, and ping validation.
  */
 import React, { useState, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import type { Theme } from "../theme.js";
 import type { TuiApiService } from "../services/api.js";
 import { listProfiles } from "../../lib/config.js";
@@ -12,8 +13,8 @@ interface StartupScreenProps {
   service: TuiApiService;
   theme: Theme;
   onSuccess: (info: { yourIp: string; credentialsValid: boolean }) => void;
-  credentialSource?: "flags" | "env" | "profile";
-  profileName?: string;
+  credentialSource?: "flags" | "env" | "profile" | undefined;
+  profileName?: string | undefined;
 }
 
 type StartupPhase = "profile-picker" | "validating" | "error";

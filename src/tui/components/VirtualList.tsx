@@ -3,7 +3,8 @@
  * Never renders more than 100 rows (PRD requirement).
  */
 import React, { useMemo } from "react";
-import { Box, Text } from "ink";
+import { Box } from "ink";
+import { Text } from "../text.js";
 import type { Theme } from "../theme.js";
 
 interface VirtualListProps<T> {

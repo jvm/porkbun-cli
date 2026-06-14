@@ -1,17 +1,20 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { Theme } from "../theme.js";
 
 export interface ForwardFormProps {
   theme: Theme;
-  initialValues?: {
-    subdomain?: string;
-    location?: string;
-    type?: string;
-    includePath?: string;
-    wildcard?: string;
-  };
+  initialValues?:
+    | {
+        subdomain?: string | undefined;
+        location?: string | undefined;
+        type?: string | undefined;
+        includePath?: string | undefined;
+        wildcard?: string | undefined;
+      }
+    | undefined;
   onSubmit: (data: {
     subdomain: string;
     location: string;

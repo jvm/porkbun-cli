@@ -18,15 +18,15 @@ export interface Profile {
 }
 
 export interface ConfigFile {
-  activeProfile?: string;
+  activeProfile?: string | undefined;
   profiles: Map<string, Profile>;
 }
 
 export interface CredentialInput {
-  apiKey?: string;
-  secretApiKey?: string;
-  profile?: string;
-  env?: NodeJS.ProcessEnv;
+  apiKey?: string | undefined;
+  secretApiKey?: string | undefined;
+  profile?: string | undefined;
+  env?: NodeJS.ProcessEnv | undefined;
 }
 
 const DEFAULT_PROFILE = "default";
@@ -107,7 +107,12 @@ export async function deleteProfile(profileName: string): Promise<ConfigFile> {
   const config = await readConfig();
   config.profiles.delete(name);
   if (config.activeProfile === name) {
-    config.activeProfile = config.profiles.keys().next().value;
+    const nextProfile = config.profiles.keys().next().value;
+    if (nextProfile) {
+      config.activeProfile = nextProfile;
+    } else {
+      delete config.activeProfile;
+    }
   }
   await writeConfig(config);
   return config;
@@ -214,7 +219,7 @@ function parseConfig(value: unknown): ConfigFile {
     value.activeProfile === undefined
       ? undefined
       : validateProfileName(String(value.activeProfile));
-  return { activeProfile, profiles };
+  return activeProfile !== undefined ? { activeProfile, profiles } : { profiles };
 }
 
 function validateProfileName(value: string): string {

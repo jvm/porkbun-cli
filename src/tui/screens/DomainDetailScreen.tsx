@@ -2,7 +2,8 @@
  * DomainDetailScreen - domain overview with tabs for DNS, nameservers, glue, forwards, DNSSEC, SSL, transfer.
  */
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import type { Theme } from "../theme.js";
 import type { TuiApiService } from "../services/api.js";
 import type {
@@ -224,10 +225,12 @@ export function DomainDetailScreen({ service, theme, domain, onBack }: DomainDet
       setRenewMode("form");
     } else if (key.leftArrow || char === "h") {
       const idx = TABS.indexOf(activeTab);
-      if (idx > 0) setActiveTab(TABS[idx - 1]);
+      const prevTab = TABS.at(idx - 1);
+      if (prevTab) setActiveTab(prevTab);
     } else if (key.rightArrow || char === "l") {
       const idx = TABS.indexOf(activeTab);
-      if (idx < TABS.length - 1) setActiveTab(TABS[idx + 1]);
+      const nextTab = TABS.at(idx + 1);
+      if (nextTab) setActiveTab(nextTab);
     }
   });
 

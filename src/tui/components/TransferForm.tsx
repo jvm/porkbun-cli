@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { TuiApiService } from "../services/api.js";
 import type { Theme } from "../theme.js";
@@ -8,14 +9,14 @@ import { priceStringToCents } from "../forms/validators.js";
 export interface TransferFormProps {
   theme: Theme;
   service: TuiApiService;
-  balanceCents?: number;
+  balanceCents?: number | undefined;
   onTransfer: (domain: string, cost: number, authCode: string) => Promise<void>;
   onCancel: () => void;
 }
 
 interface TransferPricingResult {
-  cost?: number;
-  reason?: string;
+  cost?: number | undefined;
+  reason?: string | undefined;
 }
 
 export function TransferForm({

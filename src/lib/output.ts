@@ -3,11 +3,11 @@ import YAML from "yaml";
 export type OutputFormat = "table" | "json" | "ndjson" | "yaml";
 
 export interface OutputOptions {
-  output?: string;
-  fields?: string;
-  limit?: number;
-  offset?: number;
-  stdoutIsTty?: boolean;
+  output?: string | undefined;
+  fields?: string | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
+  stdoutIsTty?: boolean | undefined;
 }
 
 export interface ListEnvelope {
@@ -15,7 +15,7 @@ export interface ListEnvelope {
   total: number;
   limit: number;
   offset: number;
-  status?: string;
+  status?: string | undefined;
 }
 
 const SECRET_KEYS = new Set([
@@ -42,7 +42,7 @@ export function chooseOutputFormat(
 
 export function normalizeForOutput(
   data: unknown,
-  input: OutputOptions & { listKey?: string },
+  input: OutputOptions & { listKey?: string | undefined },
 ): unknown {
   let next = data;
   if (input.listKey) {

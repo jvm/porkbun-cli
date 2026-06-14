@@ -12,14 +12,14 @@ import { App } from "./app.js";
 import type { TerminalCapabilities } from "./types.js";
 
 export interface LaunchTuiOptions {
-  apiKey?: string;
-  secretApiKey?: string;
-  profile?: string;
-  baseUrl?: string;
-  ipv4?: boolean;
-  timeout?: number;
-  verbose?: boolean;
-  noColor?: boolean;
+  apiKey?: string | undefined;
+  secretApiKey?: string | undefined;
+  profile?: string | undefined;
+  baseUrl?: string | undefined;
+  ipv4?: boolean | undefined;
+  timeout?: number | undefined;
+  verbose?: boolean | undefined;
+  noColor?: boolean | undefined;
 }
 
 /**

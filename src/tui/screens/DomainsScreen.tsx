@@ -2,7 +2,8 @@
  * DomainsScreen - portfolio list with search, filter, sort, pagination, and selection.
  */
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import type { Theme } from "../theme.js";
 import type { TuiApiService } from "../services/api.js";
 import type { NormalizedDomain, ReviewSnapshot } from "../types.js";
@@ -26,7 +27,7 @@ interface DomainsScreenProps {
   onOpenAccount: () => void;
   // onOpenHelp reserved for a future "?" shortcut in the command palette
   onOpenHelp: () => void;
-  balanceCents?: number;
+  balanceCents?: number | undefined;
 }
 
 type SearchPhase = "inactive" | "active";
@@ -213,7 +214,7 @@ export function DomainsScreen({
 
         const snapshot: ReviewSnapshot = {
           operation: newState ? "Enable Auto-Renew" : "Disable Auto-Renew",
-          target: targets.length === 1 ? targets[0] : `${targets.length} domains`,
+          target: targets.length === 1 ? (targets[0] ?? "") : `${targets.length} domains`,
           classification: "mutating",
           fields: targets.map((d) => ({
             label: d,
@@ -280,7 +281,7 @@ export function DomainsScreen({
         setAutoRenewNewState(newState);
         setAutoRenewSnapshot({
           operation: newState ? "Enable Auto-Renew" : "Disable Auto-Renew",
-          target: targets.length === 1 ? targets[0] : `${targets.length} domains`,
+          target: targets.length === 1 ? (targets[0] ?? "") : `${targets.length} domains`,
           classification: "mutating",
           fields: targets.map((d) => ({ label: d, value: newState ? "Enable" : "Disable" })),
         });

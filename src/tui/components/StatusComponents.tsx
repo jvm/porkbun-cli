@@ -2,7 +2,8 @@
  * Status, loading, empty, and error state components.
  */
 import React from "react";
-import { Box, Text } from "ink";
+import { Box } from "ink";
+import { Text } from "../text.js";
 import Spinner from "ink-spinner";
 import type { Theme } from "../theme.js";
 
@@ -22,7 +23,7 @@ export function LoadingState({ message }: LoadingStateProps) {
 
 interface EmptyStateProps {
   message: string;
-  details?: string;
+  details?: string | undefined;
   theme: Theme;
 }
 
@@ -37,8 +38,8 @@ export function EmptyState({ message, details }: EmptyStateProps) {
 
 interface ErrorStateProps {
   error: Error;
-  retryable?: boolean;
-  onRetry?: () => void;
+  retryable?: boolean | undefined;
+  onRetry?: (() => void | Promise<void>) | undefined;
   theme: Theme;
 }
 
@@ -67,9 +68,9 @@ export function StaleBanner({ theme }: StaleBannerProps) {
 }
 
 interface StatusLineProps {
-  message?: string;
-  selection?: { count: number; extendsBeyondLoaded?: boolean };
-  loading?: boolean;
+  message?: string | undefined;
+  selection?: { count: number; extendsBeyondLoaded?: boolean | undefined } | undefined;
+  loading?: boolean | undefined;
   theme: Theme;
 }
 

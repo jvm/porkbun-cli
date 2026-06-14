@@ -3,7 +3,8 @@
  * Shows the review snapshot and handles confirmation input
  */
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { Theme } from "../theme.js";
 import type { ReviewSnapshot, ConfirmationLevel } from "../types.js";
@@ -15,7 +16,7 @@ interface MutationConfirmProps {
   onConfirm: () => void;
   onBack: () => void;
   onCancel: () => void;
-  submitting?: boolean;
+  submitting?: boolean | undefined;
 }
 
 export function MutationConfirm({

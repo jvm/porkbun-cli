@@ -2,7 +2,8 @@
  * CommandPalette - searchable command palette filtered by current context
  */
 import React, { useState, useMemo } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { Theme } from "../theme.js";
 

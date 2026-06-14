@@ -2,7 +2,8 @@
  * Bulk operations screen - apply operations to multiple selected domains
  */
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import type { Theme } from "../theme.js";
 import type { TuiApiService } from "../services/api.js";
 import { VirtualList } from "./VirtualList.js";
@@ -21,8 +22,8 @@ type BulkStatus = "pending" | "running" | "success" | "failed" | "skipped";
 interface BulkResult {
   domain: string;
   status: BulkStatus;
-  error?: string;
-  requestId?: string;
+  error?: string | undefined;
+  requestId?: string | undefined;
 }
 
 export function BulkOperation({
@@ -55,7 +56,7 @@ export function BulkOperation({
 
   const executeOperation = async (
     domain: string,
-  ): Promise<{ success: boolean; error?: string; requestId?: string }> => {
+  ): Promise<{ success: boolean; error?: string | undefined; requestId?: string | undefined }> => {
     try {
       switch (operation) {
         case "auto-renew": {

@@ -157,8 +157,8 @@ export function pushRoute(state: NavigationState, route: Route): NavigationState
 }
 
 export function popRoute(state: NavigationState): NavigationState {
-  if (state.history.length === 0) return state;
-  const previous = state.history[state.history.length - 1];
+  const previous = state.history.at(-1);
+  if (!previous) return state;
   return {
     ...state,
     current: previous,

@@ -3,7 +3,8 @@
  * terminal capabilities, and initial route.
  */
 import React, { useState, useCallback } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "./text.js";
 import type { TerminalCapabilities } from "./types.js";
 import type { Theme } from "./theme.js";
 import type { TuiApiService } from "./services/api.js";
@@ -29,8 +30,8 @@ interface AppProps {
   service: TuiApiService;
   theme: Theme;
   terminal: TerminalCapabilities;
-  credentialSource?: "flags" | "env" | "profile";
-  profileName?: string;
+  credentialSource?: "flags" | "env" | "profile" | undefined;
+  profileName?: string | undefined;
 }
 
 export function App({ service, theme, terminal, credentialSource, profileName }: AppProps) {
@@ -47,11 +48,11 @@ export function App({ service, theme, terminal, credentialSource, profileName }:
   );
 
   const goBack = useCallback(() => {
-    if (history.length === 0) {
+    const prev = history.at(-1);
+    if (!prev) {
       setScreen({ name: "domains" });
       return;
     }
-    const prev = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
     setScreen(prev);
   }, [history]);
@@ -198,9 +199,9 @@ function Header({
   balanceCents,
 }: {
   theme: Theme;
-  profileName?: string;
-  credentialSource?: "flags" | "env" | "profile";
-  balanceCents?: number;
+  profileName?: string | undefined;
+  credentialSource?: "flags" | "env" | "profile" | undefined;
+  balanceCents?: number | undefined;
 }) {
   return (
     <Box justifyContent="space-between" width="100%">
@@ -226,7 +227,7 @@ function AccountScreen({
   onBack,
 }: {
   theme: Theme;
-  balanceCents?: number;
+  balanceCents?: number | undefined;
   onBack: () => void;
 }) {
   useInput((char, key) => {

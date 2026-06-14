@@ -1,11 +1,19 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { Theme } from "../theme.js";
 
 export interface DnssecRecordFormProps {
   theme: Theme;
-  initialValues?: { keyTag?: string; alg?: string; digestType?: string; digest?: string };
+  initialValues?:
+    | {
+        keyTag?: string | undefined;
+        alg?: string | undefined;
+        digestType?: string | undefined;
+        digest?: string | undefined;
+      }
+    | undefined;
   onSubmit: (data: { keyTag: number; alg: number; digestType: number; digest: string }) => void;
   onCancel: () => void;
 }

@@ -719,8 +719,8 @@ function normalizeDnssecResponse(record: Record<string, unknown>): NormalizedDns
       .sort((a, b) => a.keyTag - b.keyTag);
   }
 
-  if (typeof records === "object" && records !== null) {
-    return Object.entries(records as Record<string, unknown>)
+  if (isRecord(records)) {
+    return Object.entries(records)
       .map(([keyTag, data]) => {
         const raw = asRecord(data);
         return {
@@ -764,9 +764,12 @@ function toBool(value: unknown): boolean {
   return false;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
-  if (typeof value === "object" && value !== null && !Array.isArray(value))
-    return value as Record<string, unknown>;
+  if (isRecord(value)) return value;
   return {};
 }
 

@@ -2,9 +2,10 @@
  * SSL export form - secure export of SSL certificate bundles
  */
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
-import { mkdir, writeFile, chmod, stat } from "node:fs/promises";
+import { mkdir, writeFile, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import type { Theme } from "../theme.js";
 import type { NormalizedSslBundle } from "../types.js";
@@ -54,35 +55,18 @@ export function SslExportForm({
       const keyPath = join(exportPath, `${domain}.private-key.pem`);
       const pubPath = join(exportPath, `${domain}.public-key.pem`);
 
-      // Check if files exist
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      const certExists = await stat(certPath)
-        .then(() => true)
-        .catch(() => false);
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      const keyExists = await stat(keyPath)
-        .then(() => true)
-        .catch(() => false);
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      const pubExists = await stat(pubPath)
-        .then(() => true)
-        .catch(() => false);
+      const writeMode = overwrite ? "w" : "wx";
 
-      if ((certExists || keyExists || pubExists) && !overwrite) {
-        setError("Files already exist. Press Enter to overwrite or Esc to cancel.");
-        setExporting(false);
-        return;
-      }
-
-      // Write files with secure permissions
+      // Write files with secure permissions. When overwrite=false,
+      // `wx` makes the create operation atomic and avoids check-then-act races.
       if (sslBundle.certificateChain) {
         // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await writeFile(certPath, sslBundle.certificateChain, { mode: 0o644 });
+        await writeFile(certPath, sslBundle.certificateChain, { mode: 0o644, flag: writeMode });
       }
 
       if (sslBundle.privateKey) {
         // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await writeFile(keyPath, sslBundle.privateKey, { mode: 0o600 });
+        await writeFile(keyPath, sslBundle.privateKey, { mode: 0o600, flag: writeMode });
         // writeFile's mode option is only honored on create; re-apply for overwrites.
         // eslint-disable-next-line security/detect-non-literal-fs-filename
         await chmod(keyPath, 0o600);
@@ -90,7 +74,7 @@ export function SslExportForm({
 
       if (sslBundle.publicKey) {
         // eslint-disable-next-line security/detect-non-literal-fs-filename
-        await writeFile(pubPath, sslBundle.publicKey, { mode: 0o644 });
+        await writeFile(pubPath, sslBundle.publicKey, { mode: 0o644, flag: writeMode });
       }
 
       setSuccess(`Exported SSL bundle to ${exportPath}`);
@@ -98,7 +82,11 @@ export function SslExportForm({
         onExport();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      if (err instanceof Error && "code" in err && err.code === "EEXIST" && !overwrite) {
+        setError("Files already exist. Press Enter to overwrite or Esc to cancel.");
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
       setExporting(false);
     }
   };

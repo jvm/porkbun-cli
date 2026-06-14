@@ -20,9 +20,9 @@ export interface CommandOptionDefinition {
   type: string;
   target?: Target;
   key?: string;
-  parser?: OptionParser;
-  required?: boolean;
-  repeat?: boolean;
+  parser?: OptionParser | undefined;
+  required?: boolean | undefined;
+  repeat?: boolean | undefined;
   defaultValue?: unknown;
 }
 
@@ -35,20 +35,20 @@ export interface BuildContext {
 
 export interface OperationInvocation {
   operationId: string;
-  pathParams?: Record<string, unknown>;
-  query?: Record<string, unknown>;
-  body?: Record<string, unknown>;
-  listKey?: string;
+  pathParams?: Record<string, unknown> | undefined;
+  query?: Record<string, unknown> | undefined;
+  body?: Record<string, unknown> | undefined;
+  listKey?: string | undefined;
 }
 
 export interface CliCommandDefinition {
   path: string[];
   description: string;
   operationId: string;
-  aliases?: string[];
-  args?: CommandArgDefinition[];
-  options?: CommandOptionDefinition[];
-  listKey?: string;
+  aliases?: string[] | undefined;
+  args?: CommandArgDefinition[] | undefined;
+  options?: CommandOptionDefinition[] | undefined;
+  listKey?: string | undefined;
   build?: (context: BuildContext) => OperationInvocation | Promise<OperationInvocation>;
 }
 

@@ -21,8 +21,8 @@ export type ErrorKind =
 
 export class CliError extends Error {
   kind: ErrorKind;
-  code?: string;
-  requestId?: string;
+  code?: string | undefined;
+  requestId?: string | undefined;
   retryable: boolean;
   exitCode: number;
   details?: unknown;
@@ -30,10 +30,10 @@ export class CliError extends Error {
   constructor(input: {
     kind: ErrorKind;
     message: string;
-    code?: string;
-    requestId?: string;
-    retryable?: boolean;
-    exitCode?: number;
+    code?: string | undefined;
+    requestId?: string | undefined;
+    retryable?: boolean | undefined;
+    exitCode?: number | undefined;
     details?: unknown;
   }) {
     super(input.message);
@@ -93,11 +93,11 @@ export function errorEnvelope(error: unknown): { error: Record<string, unknown> 
     return {
       error: cleanObject({
         kind: error.kind,
-        code: error.code,
+        ...(error.code !== undefined ? { code: error.code } : {}),
         message: error.message,
-        requestId: error.requestId,
+        ...(error.requestId !== undefined ? { requestId: error.requestId } : {}),
         retryable: error.retryable,
-        details: error.details,
+        ...(error.details !== undefined ? { details: error.details } : {}),
       }),
     };
   }

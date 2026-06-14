@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { Text } from "../text.js";
 import TextInput from "ink-text-input";
 import type { Theme } from "../theme.js";
 import type { NormalizedDnsRecord } from "../types.js";
@@ -8,7 +9,7 @@ import { buildDnsRecordPayload, stripParentDomain } from "../forms/validators.js
 interface DnsRecordFormProps {
   theme: Theme;
   domain: string;
-  initialRecord?: NormalizedDnsRecord;
+  initialRecord?: NormalizedDnsRecord | undefined;
   onSubmit: (record: Partial<NormalizedDnsRecord>) => void;
   onCancel: () => void;
   mode: "create" | "edit";

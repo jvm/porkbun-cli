@@ -2,7 +2,8 @@
  * RegisterScreen - domain registration with availability check and billable confirmation
  */
 import React, { useState, useCallback } from "react";
-import { Box, Text } from "ink";
+import { Box } from "ink";
+import { Text } from "../text.js";
 import type { Theme } from "../theme.js";
 import type { TuiApiService } from "../services/api.js";
 import { RegisterForm } from "../components/RegisterForm.js";
@@ -10,7 +11,7 @@ import { RegisterForm } from "../components/RegisterForm.js";
 interface RegisterScreenProps {
   service: TuiApiService;
   theme: Theme;
-  balanceCents?: number;
+  balanceCents?: number | undefined;
   onSuccess: () => void;
   onCancel: () => void;
 }
