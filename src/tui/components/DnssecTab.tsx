@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { NormalizedDnssecRecord } from '../types.js';
+import type { Theme } from '../theme.js';
 
 export interface DnssecTabProps {
   records: NormalizedDnssecRecord[];
-  theme: any;
+  theme: Theme;
   onCreate: () => void;
   onDelete: (record: NormalizedDnssecRecord) => void;
 }

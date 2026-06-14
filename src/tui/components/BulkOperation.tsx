@@ -1,7 +1,7 @@
 /**
  * Bulk operations screen - apply operations to multiple selected domains
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Theme } from '../theme.js';
 import type { TuiApiService } from '../services/api.js';
@@ -71,7 +71,7 @@ export function BulkOperation({ theme, service, domains, operation, onComplete, 
     }
 
     for (const batch of batches) {
-      const promises = batch.map(async (item, idx) => {
+      const promises = batch.map(async (item) => {
         const resultIndex = results.findIndex(r => r.domain === item.domain);
         
         // Update status to running
@@ -119,7 +119,9 @@ export function BulkOperation({ theme, service, domains, operation, onComplete, 
 
   const successCount = results.filter(r => r.status === 'success').length;
   const failedCount = results.filter(r => r.status === 'failed').length;
+  // pendingCount reserved for a future "X remaining" footer
   const pendingCount = results.filter(r => r.status === 'pending').length;
+  void pendingCount;
 
   return (
     <Box flexDirection="column" padding={1}>

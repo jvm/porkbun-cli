@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
+import type { Theme } from '../theme.js';
 
 export interface ForwardFormProps {
-  theme: any;
+  theme: Theme;
   initialValues?: { subdomain?: string; location?: string; type?: string; includePath?: string; wildcard?: string };
   onSubmit: (data: { subdomain: string; location: string; type: string; includePath: string; wildcard: string }) => void;
   onCancel: () => void;

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { NormalizedGlueRecord } from '../types.js';
+import type { Theme } from '../theme.js';
 
 export interface GlueTabProps {
   records: NormalizedGlueRecord[];
-  theme: any;
+  theme: Theme;
   onCreate: () => void;
   onEdit: (record: NormalizedGlueRecord) => void;
   onDelete: (record: NormalizedGlueRecord) => void;

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { NormalizedForward } from '../types.js';
+import type { Theme } from '../theme.js';
 
 export interface ForwardsTabProps {
   forwards: NormalizedForward[];
-  theme: any;
+  theme: Theme;
   onCreate: () => void;
   onDelete: (forward: NormalizedForward) => void;
 }
