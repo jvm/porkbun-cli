@@ -1,6 +1,6 @@
-import { chmod, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { chmod, mkdir, readFile, rename, stat, writeFile } from "./safe-io.js";
 import { CliError } from "./errors.js";
 
 export interface Credentials {
@@ -42,7 +42,6 @@ export async function readConfig(): Promise<ConfigFile> {
   try {
     // Path comes from PORKBUN_CONFIG_FILE / XDG_CONFIG_HOME / ~/.config.
     // All three are operator-controlled environment, not attacker input.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
     const contents = await readFile(path, "utf8");
     return parseConfig(JSON.parse(contents));
   } catch (error) {
@@ -62,7 +61,6 @@ export async function writeConfig(config: ConfigFile): Promise<void> {
   const directory = dirname(path);
   // The directory is derived from configPath() (operator-controlled env).
   // File modes 0700 / 0600 below are the security boundary.
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const tmpPath = `${path}.${process.pid}.tmp`;
   // JSON.stringify doesn't serialize Maps; convert at the persistence
@@ -71,13 +69,9 @@ export async function writeConfig(config: ConfigFile): Promise<void> {
     ...config,
     profiles: Object.fromEntries(config.profiles),
   };
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await writeFile(tmpPath, `${JSON.stringify(serialized, null, 2)}\n`, { mode: 0o600 });
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await chmod(tmpPath, 0o600);
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await rename(tmpPath, path);
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await chmod(path, 0o600);
 }
 
@@ -190,7 +184,6 @@ export async function resolveCredentials(
 export async function configFileMode(): Promise<string | undefined> {
   try {
     // Same operator-controlled env source as the read/write above.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
     const info = await stat(configPath());
     return `0${(info.mode & 0o777).toString(8)}`;
   } catch (error) {

@@ -3,15 +3,6 @@
  * Strips control characters, bounds field lengths, and redacts sensitive values.
  */
 
-/* eslint-disable no-control-regex --
- * This whole module is the redaction layer. The `no-control-regex` rule
- * warns about regexes that match control characters, but that is exactly
- * what `CONTROL_CHARS` and `ANSI_ESCAPE` are for — stripping C0 control
- * bytes and ANSI CSI sequences from untrusted input. The patterns are
- * narrowly bounded (specific byte ranges) and only used for replacement,
- * never for matching against user input that drives control flow.
- */
-
 const SENSITIVE_KEY_PATTERNS = [
   /api[_-]?key/i,
   /secret[_-]?api[_-]?key/i,
@@ -25,12 +16,6 @@ const SENSITIVE_KEY_PATTERNS = [
   /token/i,
 ];
 
-// Strip control characters: matches bytes 0x00-0x1F except \t (0x09),
-// \n (0x0A), \r (0x0D), and DEL (0x7F). The `s` flag lets `.` cross
-// line breaks. We don't use the `u` flag because the input may be a
-// partially-decoded byte stream.
-const CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
-const ANSI_ESCAPE = /\x1B\[[0-9;]*[A-Za-z]/g;
 const MAX_FIELD_LENGTH = 200;
 
 /**
@@ -40,11 +25,45 @@ const MAX_FIELD_LENGTH = 200;
 export function sanitizeString(value: unknown): string {
   if (value === null || value === undefined) return "";
   const str = String(value);
-  return str
-    .replace(ANSI_ESCAPE, "")
-    .replace(CONTROL_CHARS, "")
-    .replace(/[\r\n]+/g, " ")
-    .trim();
+  let out = "";
+  let lastWasSpace = false;
+
+  for (let i = 0; i < str.length; i += 1) {
+    const code = str.charCodeAt(i);
+
+    if (code === 0x1b && str.charCodeAt(i + 1) === 0x5b) {
+      i += 2;
+      while (i < str.length) {
+        const c = str.charCodeAt(i);
+        if (c >= 0x40 && c <= 0x7e) break;
+        i += 1;
+      }
+      continue;
+    }
+
+    if (code === 0x0a || code === 0x0d) {
+      if (!lastWasSpace) {
+        out += " ";
+        lastWasSpace = true;
+      }
+      continue;
+    }
+
+    if (code === 0x09) {
+      out += "\t";
+      lastWasSpace = false;
+      continue;
+    }
+
+    if (code < 0x20 || code === 0x7f) {
+      continue;
+    }
+
+    out += str.charAt(i);
+    lastWasSpace = false;
+  }
+
+  return out.trim();
 }
 
 /**
@@ -59,7 +78,10 @@ export function truncateField(value: string, maxLen = MAX_FIELD_LENGTH): string 
  * Check if a key matches a sensitive pattern.
  */
 export function isSensitiveKey(key: string): boolean {
-  return SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));
+  for (const pattern of SENSITIVE_KEY_PATTERNS) {
+    if (pattern.test(key)) return true;
+  }
+  return false;
 }
 
 /**

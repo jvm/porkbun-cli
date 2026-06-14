@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
-import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { resolve } from "node:path";
+import { readFile } from "./lib/safe-io.js";
 import { createInterface } from "node:readline/promises";
 import { Command, CommanderError, InvalidArgumentError } from "commander";
 import { ApiClient } from "./lib/api-client.js";
@@ -530,7 +530,6 @@ async function parseBodyOptions(
     ? // Path comes from the --body-file CLI flag. The CLI rejects unknown
       // flags at parse time, so the value is operator-supplied and not
       // attacker-controlled; we don't traverse to system dirs by design.
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await readFile(String(options.bodyFile), "utf8")
     : typeof options.body === "string"
       ? options.body
@@ -599,13 +598,7 @@ async function promptIfTty(prompt: string): Promise<string | undefined> {
 
 async function readBundledSpec(): Promise<unknown> {
   const specPath = new URL("./generated/openapi.json", import.meta.url);
-  return JSON.parse(
-    // specPath is a file: URL built from import.meta.url, i.e. relative
-    // to the script. Not user-controlled; the path resolves inside the
-    // package's own dist/ tree.
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    await readFile(specPath, "utf8"),
-  );
+  return JSON.parse(await readFile(specPath, "utf8"));
 }
 
 function stringOption(value: unknown): string | undefined {
@@ -621,12 +614,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 // process.argv[1] is the path the user (or their shell launcher) used
-// to invoke the CLI. realpathSync resolves symlinks so the entry-guard
-// works correctly under `npm link`. Not user-traversable: the value
-// is compared for equality with import.meta.url, not used to read or
-// write any other file.
-// eslint-disable-next-line security/detect-non-literal-fs-filename
-const entryPath = process.argv[1] ? pathToFileURL(realpathSync(process.argv[1])).href : "";
+// to invoke the CLI. We resolve it for the entry-guard so `npm link`
+// behaves predictably, but the value is only compared with import.meta.url.
+const entryPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : "";
 if (import.meta.url === entryPath) {
   await run();
 }

@@ -5,8 +5,8 @@ import React, { useState } from "react";
 import { Box, useInput } from "ink";
 import { Text } from "../text.js";
 import TextInput from "ink-text-input";
-import { mkdir, writeFile, chmod } from "node:fs/promises";
 import { join } from "node:path";
+import { chmod, mkdir, writeFile } from "../../lib/safe-io.js";
 import type { Theme } from "../theme.js";
 import type { NormalizedSslBundle } from "../types.js";
 
@@ -45,10 +45,7 @@ export function SslExportForm({
       // (the SSL bundle's owner). File modes 0700 / 0600 below are the
       // real security boundary; path validation would just be friction
       // for the legitimate use case.
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await mkdir(exportPath, { recursive: true, mode: 0o700 });
-
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await chmod(exportPath, 0o700);
 
       const certPath = join(exportPath, `${domain}.certificate-chain.pem`);
@@ -60,20 +57,16 @@ export function SslExportForm({
       // Write files with secure permissions. When overwrite=false,
       // `wx` makes the create operation atomic and avoids check-then-act races.
       if (sslBundle.certificateChain) {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await writeFile(certPath, sslBundle.certificateChain, { mode: 0o644, flag: writeMode });
       }
 
       if (sslBundle.privateKey) {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await writeFile(keyPath, sslBundle.privateKey, { mode: 0o600, flag: writeMode });
         // writeFile's mode option is only honored on create; re-apply for overwrites.
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await chmod(keyPath, 0o600);
       }
 
       if (sslBundle.publicKey) {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await writeFile(pubPath, sslBundle.publicKey, { mode: 0o644, flag: writeMode });
       }
 
