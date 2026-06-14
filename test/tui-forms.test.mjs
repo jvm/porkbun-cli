@@ -19,99 +19,99 @@ describe('TUI Form Validators', () => {
   describe('validateDnsRecordForm', () => {
     it('validates required fields', () => {
       const errors = validateDnsRecordForm({ type: '', name: '', content: '', ttl: '', prio: '', notes: '' });
-      assert.ok(errors.type);
-      assert.ok(errors.content);
+      assert.ok(errors.get('type'));
+      assert.ok(errors.get('content'));
     });
 
     it('validates A record IPv4', () => {
       const errors = validateDnsRecordForm({ type: 'A', name: 'test', content: 'invalid', ttl: '', prio: '', notes: '' });
-      assert.ok(errors.content?.includes('IPv4'));
+      assert.ok(errors.get('content')?.includes('IPv4'));
     });
 
     it('accepts valid A record', () => {
       const errors = validateDnsRecordForm({ type: 'A', name: 'test', content: '192.168.1.1', ttl: '', prio: '', notes: '' });
-      assert.strictEqual(Object.keys(errors).length, 0);
+      assert.strictEqual(errors.size, 0);
     });
 
     it('validates AAAA record IPv6', () => {
       const errors = validateDnsRecordForm({ type: 'AAAA', name: 'test', content: 'invalid', ttl: '', prio: '', notes: '' });
-      assert.ok(errors.content?.includes('IPv6'));
+      assert.ok(errors.get('content')?.includes('IPv6'));
     });
 
     it('accepts valid AAAA record', () => {
       const errors = validateDnsRecordForm({ type: 'AAAA', name: 'test', content: '2001:db8::1', ttl: '', prio: '', notes: '' });
-      assert.strictEqual(Object.keys(errors).length, 0);
+      assert.strictEqual(errors.size, 0);
     });
 
     it('validates TTL as integer', () => {
       const errors = validateDnsRecordForm({ type: 'A', name: 'test', content: '1.2.3.4', ttl: 'invalid', prio: '', notes: '' });
-      assert.ok(errors.ttl);
+      assert.ok(errors.get('ttl'));
     });
 
     it('accepts valid TTL', () => {
       const errors = validateDnsRecordForm({ type: 'A', name: 'test', content: '1.2.3.4', ttl: '300', prio: '', notes: '' });
-      assert.strictEqual(errors.ttl, undefined);
+      assert.strictEqual(errors.get('ttl'), undefined);
     });
   });
 
   describe('validateNameserverForm', () => {
     it('requires at least one nameserver', () => {
       const errors = validateNameserverForm({ nameservers: [] });
-      assert.ok(errors.nameservers);
+      assert.ok(errors.get('nameservers'));
     });
 
     it('validates hostname format', () => {
       const errors = validateNameserverForm({ nameservers: ['invalid..hostname'] });
-      assert.ok(errors.ns_0);
+      assert.ok(errors.get('ns_0'));
     });
 
     it('accepts valid nameservers', () => {
       const errors = validateNameserverForm({ nameservers: ['ns1.example.com', 'ns2.example.com'] });
-      assert.strictEqual(Object.keys(errors).length, 0);
+      assert.strictEqual(errors.size, 0);
     });
   });
 
   describe('validateGlueForm', () => {
     it('validates IP addresses', () => {
       const errors = validateGlueForm({ subdomain: 'ns1', ips: ['invalid'] }, 'example.com');
-      assert.ok(errors.ip_0);
+      assert.ok(errors.get('ip_0'));
     });
 
     it('accepts valid IPs', () => {
       const errors = validateGlueForm({ subdomain: 'ns1', ips: ['192.168.1.1', '2001:db8::1'] }, 'example.com');
-      assert.strictEqual(Object.keys(errors).length, 0);
+      assert.strictEqual(errors.size, 0);
     });
   });
 
   describe('validateForwardForm', () => {
     it('requires http or https URLs', () => {
       const errors = validateForwardForm({ subdomain: '', location: 'ftp://example.com', type: 'permanent', includePath: false, wildcard: false });
-      assert.ok(errors.location?.includes('http'));
+      assert.ok(errors.get('location')?.includes('http'));
     });
 
     it('accepts valid URLs', () => {
       const errors = validateForwardForm({ subdomain: 'www', location: 'https://example.com', type: 'permanent', includePath: false, wildcard: false });
-      assert.strictEqual(Object.keys(errors).length, 0);
+      assert.strictEqual(errors.size, 0);
     });
   });
 
   describe('validateDnssecForm', () => {
     it('validates required fields', () => {
       const errors = validateDnssecForm({ keyTag: '', alg: '', digestType: '', digest: '', maxSigLife: '', keyDataFlags: '', keyDataProtocol: '', keyDataAlgo: '', keyDataPubKey: '' });
-      assert.ok(errors.keyTag);
-      assert.ok(errors.alg);
-      assert.ok(errors.digestType);
-      assert.ok(errors.digest);
+      assert.ok(errors.get('keyTag'));
+      assert.ok(errors.get('alg'));
+      assert.ok(errors.get('digestType'));
+      assert.ok(errors.get('digest'));
     });
 
     it('validates digest as hex', () => {
       const errors = validateDnssecForm({ keyTag: '12345', alg: '8', digestType: '2', digest: 'not-hex', maxSigLife: '', keyDataFlags: '', keyDataProtocol: '', keyDataAlgo: '', keyDataPubKey: '' });
-      assert.ok(errors.digest);
+      assert.ok(errors.get('digest'));
     });
 
     it('accepts valid DNSSEC data', () => {
       const errors = validateDnssecForm({ keyTag: '12345', alg: '8', digestType: '2', digest: 'abcdef1234567890', maxSigLife: '', keyDataFlags: '', keyDataProtocol: '', keyDataAlgo: '', keyDataPubKey: '' });
-      assert.strictEqual(Object.keys(errors).length, 0);
+      assert.strictEqual(errors.size, 0);
     });
   });
 

@@ -8,3 +8,4 @@ dist/
 .pi/
 coverage/
 tmp/
+eslint.config.mjs
