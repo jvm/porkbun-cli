@@ -61,7 +61,16 @@ export function buildDnsRecordPayload(values: DnsRecordFormValues, parentDomain?
     content: values.content,
   };
   const cleanedName = values.name.trim();
-  if (cleanedName && cleanedName !== '@') {
+  // Three forms all mean "apex / root record" — submit with no name field:
+  //   * empty
+  //   * the literal '@'
+  //   * equal to the parent domain (the FQDN returned by the read API
+  //     when the record IS the apex; e.g. "example.com" + parent "example.com")
+  const isApex =
+    !cleanedName ||
+    cleanedName === '@' ||
+    (!!parentDomain && cleanedName.toLowerCase() === parentDomain.toLowerCase());
+  if (!isApex) {
     payload.name = parentDomain ? stripParentDomain(cleanedName, parentDomain) : cleanedName;
   }
   if (values.ttl && isValidInteger(values.ttl)) payload.ttl = parseInt(values.ttl, 10);

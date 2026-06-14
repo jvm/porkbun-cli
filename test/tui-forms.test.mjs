@@ -147,6 +147,22 @@ describe('TUI Form Validators', () => {
       );
       assert.strictEqual(payload.name, 'www');
     });
+
+    it('treats the FQDN equal to the parent domain as the apex', () => {
+      const payload = buildDnsRecordPayload(
+        { type: 'A', name: 'example.com', content: '1.2.3.4', ttl: '', prio: '', notes: '' },
+        'example.com',
+      );
+      assert.strictEqual(payload.name, undefined);
+    });
+
+    it('treats the FQDN apex case-insensitively', () => {
+      const payload = buildDnsRecordPayload(
+        { type: 'A', name: 'EXAMPLE.COM', content: '1.2.3.4', ttl: '', prio: '', notes: '' },
+        'example.com',
+      );
+      assert.strictEqual(payload.name, undefined);
+    });
   });
 
   describe('stripParentDomain', () => {
