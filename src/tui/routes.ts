@@ -26,14 +26,7 @@ export interface DomainsRoute {
 }
 
 export type DomainDetailTab =
-  | "overview"
-  | "dns"
-  | "nameservers"
-  | "glue"
-  | "forwards"
-  | "dnssec"
-  | "ssl"
-  | "transfer";
+  "overview" | "dns" | "nameservers" | "glue" | "forwards" | "dnssec" | "ssl" | "transfer";
 
 export interface DomainDetailRoute {
   name: "domain-detail";
