@@ -38,14 +38,7 @@ interface DomainDetailScreenProps {
 }
 
 type DetailTab =
-  | "overview"
-  | "dns"
-  | "nameservers"
-  | "glue"
-  | "forwards"
-  | "dnssec"
-  | "ssl"
-  | "transfer";
+  "overview" | "dns" | "nameservers" | "glue" | "forwards" | "dnssec" | "ssl" | "transfer";
 
 const TABS: DetailTab[] = [
   "overview",
