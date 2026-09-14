@@ -60,20 +60,20 @@
     "ink": "^7.1.1",
     "ink-spinner": "^5.0.0",
     "ink-text-input": "^6.0.0",
-    "react": "^19.2.8",
+    "react": "^19.3.0",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^25.9.5",
-    "@types/react": "^19.2.18",
-    "eslint": "^10.8.0",
+    "@types/node": "^25.9.6",
+    "@types/react": "^19.3.0",
+    "eslint": "^10.10.0",
     "eslint-plugin-security": "^4.0.1",
-    "lefthook": "^2.1.10",
+    "lefthook": "^2.1.12",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.65.0",
-    "undici": "^8.9.0",
+    "typescript-eslint": "^8.70.0",
+    "undici": "^8.10.2",
     "vitest": "^4.1.10"
   },
   "publishConfig": {
